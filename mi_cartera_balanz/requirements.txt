@@ -1,4 +1,3 @@
---only-binary=:all:
 streamlit
 pandas
 numpy
