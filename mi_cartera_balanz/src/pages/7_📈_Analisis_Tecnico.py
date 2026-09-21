@@ -29,7 +29,7 @@ if analizar_btn or ticker_input:
             st.error(f"❌ No se encontraron datos para el ticker {ticker_input}. Verificá el símbolo.")
         else:
             # Limpiamos filas vacías fantasmas que manda Yahoo Finance los fines de semana
-            df['Close'] = df['Close'].ffill()
+            df = df.dropna(subset=['Close'])
             cierre = df['Close']
             
             # --- 2. Cálculos Matemáticos ---
