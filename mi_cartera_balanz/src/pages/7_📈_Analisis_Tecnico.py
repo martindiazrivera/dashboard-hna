@@ -30,20 +30,19 @@ def metric_color(label, value, color="white", is_currency=False, is_volume=False
     """
     st.markdown(html, unsafe_allow_html=True)
 
-col1, col2, col3 = st.columns([2, 1, 1])
+# --- 1. Interfaz Reactiva ---
+col1, col2 = st.columns([2, 1])
 with col1:
     ticker_input = st.text_input("Activo (Ej: YPFD.BA, AAPL.BA, SPY)", value="AAPL.BA").upper()
 with col2:
-    # Nuevo Selector de Zoom Inteligente (6m por defecto)
     zoom_input = st.selectbox("Rango Visual del Gráfico", ["1m", "3m", "6m", "1y", "2y", "5y"], index=2)
-with col3:
-    st.write("") 
-    st.write("")
-    analizar_btn = st.button("🚀 Analizar Activo", use_container_width=True)
 
-if analizar_btn or ticker_input:
+st.write("") 
+st.write("")
+
+if ticker_input:
     with st.spinner(f"Descargando datos y calculando métricas para {ticker_input}..."):
-        # Siempre bajamos 5 años en el fondo para asegurar que la EMA55 y el ADX arranquen con precisión perfecta
+        # Descargamos 5 años de historia siempre para que las EMAs y el ADX arranquen con precisión perfecta
         df = obtener_ohlcv(ticker_input, period="5y", interval="1d")
         
         if df is None or df.empty:
@@ -63,15 +62,14 @@ if analizar_btn or ticker_input:
             adx_series = adx(high, low, cierre, 14)
             
             # --- Conversión del Zoom a Días Hábiles ---
-            # 1 mes ~ 21 ruedas de bolsa
             dias_zoom = {"1m": 21, "3m": 63, "6m": 126, "1y": 252, "2y": 504, "5y": 1260}
             ventanas_dias = dias_zoom.get(zoom_input, 126)
             
-            # Recortamos el dataframe solo a la ventana visual y calculamos el POC exacto para ese tramo
+            # Recortamos el dataframe solo a la ventana visual para el gráfico y el POC exacto
             df_plot = df.tail(ventanas_dias).copy()
             _, _, poc_price = calcular_perfil_volumen(df_plot, bins=40)
             
-            # Últimos valores (Siempre la rueda actual, sin importar el zoom)
+            # Últimos valores (La rueda más reciente, sin importar el zoom visual)
             last_date = df.index[-1].strftime('%d/%m/%Y')
             last_close = cierre.iloc[-1]
             last_bb_up = bb_up.iloc[-1]
@@ -88,20 +86,24 @@ if analizar_btn or ticker_input:
             last_vol = volume.iloc[-1]
             vol_sma20 = volume.rolling(window=20).mean().iloc[-1]
             
-            # --- 3. LÓGICA DE COLORES (SEMÁFORO) ---
+            # --- 3. LÓGICA DE COLORES (SEMÁFORO INSTITUCIONAL) ---
+            # 3.1 CRSI
             if last_crsi >= 90 or last_crsi <= 10: color_crsi = "#ff4b4b"
             elif last_crsi >= 70 or last_crsi < 30: color_crsi = "#faca2b"
             else: color_crsi = "white"
 
+            # 3.2 Bollinger (%B)
             pb = (last_close - last_bb_low) / (last_bb_up - last_bb_low)
             if pb >= 1.0 or pb <= 0.0: color_bb = "#ff4b4b"
             elif pb >= 0.85 or pb <= 0.15: color_bb = "#faca2b"
             else: color_bb = "white"
 
+            # 3.3 Tendencia EMAs
             if last_ema9 > last_ema21 > last_ema55: color_ema = "white"
             elif last_ema9 < last_ema21 < last_ema55: color_ema = "#ff4b4b"
             else: color_ema = "#faca2b"
 
+            # 3.4 ADX y Momentum (AO)
             if last_adx < 20: color_adx = "#ff4b4b"
             elif last_adx < 25: color_adx = "#faca2b"
             else: color_adx = "white"
@@ -111,6 +113,7 @@ if analizar_btn or ticker_input:
             else: 
                 color_ao = "#faca2b"
 
+            # 3.5 Volumen y POC
             if last_vol > (vol_sma20 * 1.5): color_vol = "#2ecc71" 
             elif last_vol < vol_sma20: color_vol = "#ff4b4b" 
             else: color_vol = "white"
@@ -118,7 +121,7 @@ if analizar_btn or ticker_input:
             if last_close > poc_price: color_poc = "#2ecc71" 
             else: color_poc = "#ff4b4b"
 
-            # --- 4. Panel Visual (5 Columnas) ---
+            # --- 4. PANEL VISUAL SUPERIOR (5 Columnas) ---
             st.markdown(f"### Valores Actuales (Cierre: {last_date})")
             
             m_col1, m_col2, m_col3, m_col4, m_col5 = st.columns(5)
@@ -153,10 +156,10 @@ if analizar_btn or ticker_input:
 
             st.divider()
             
-            # --- 5. Gráfico Interactivo de Alta Fidelidad (5 Paneles) ---
+            # --- 5. GRÁFICO INTERACTIVO DE ALTA FIDELIDAD ---
             st.markdown("### Gráfico Cuantitativo (Estilo Institucional)")
             
-            # Sincronizamos las colas de datos para el gráfico
+            # Sincronizamos las colas de datos para encajar exacto con la ventana visual
             vol_tail = df['Volume'].tail(ventanas_dias)
             vol_sma = df['Volume'].rolling(window=20).mean().tail(ventanas_dias)
             ao_tail = ao.tail(ventanas_dias)
@@ -169,7 +172,7 @@ if analizar_btn or ticker_input:
                 row_heights=[0.40, 0.15, 0.15, 0.15, 0.15]
             )
 
-            # --- FILA 1: Precio + Bollinger + EMAs + POC ---
+            # FILA 1: Precio + Bollinger + EMAs + Línea POC
             fig.add_trace(go.Candlestick(
                 x=df_plot.index, open=df_plot['Open'], high=df_plot['High'],
                 low=df_plot['Low'], close=df_plot['Close'], name="Precio"
@@ -187,27 +190,27 @@ if analizar_btn or ticker_input:
             fig.add_trace(go.Scatter(x=df_plot.index, y=emas['EMA_9'].tail(ventanas_dias), line=dict(color='blue', width=1.5), name='EMA 9'), row=1, col=1)
             fig.add_trace(go.Scatter(x=df_plot.index, y=emas['EMA_55'].tail(ventanas_dias), line=dict(color='red', width=2), name='EMA 55'), row=1, col=1)
 
-            # --- FILA 2: Volumen + SMA Volumen (20) ---
+            # FILA 2: Volumen + SMA Volumen (20)
             vol_colors = ['rgba(38, 166, 154, 0.6)' if row['Close'] >= row['Open'] else 'rgba(239, 83, 80, 0.6)' for index, row in df_plot.iterrows()]
             fig.add_trace(go.Bar(x=df_plot.index, y=vol_tail, marker_color=vol_colors, name='Volumen'), row=2, col=1)
             fig.add_trace(go.Scatter(x=df_plot.index, y=vol_sma, line=dict(color='gray', width=1.5), name='Vol SMA 20'), row=2, col=1)
 
-            # --- FILA 3: Awesome Oscillator (AO) ---
+            # FILA 3: Awesome Oscillator (AO)
             fig.add_trace(go.Bar(x=df_plot.index, y=ao_tail, marker_color=colors_ao, name='AO'), row=3, col=1)
             fig.add_hline(y=0, line_dash="solid", line_color="gray", opacity=0.5, row=3, col=1)
 
-            # --- FILA 4: ADX (Fuerza de Tendencia) ---
+            # FILA 4: ADX (Fuerza de Tendencia)
             fig.add_trace(go.Scatter(x=df_plot.index, y=adx_series.tail(ventanas_dias), line=dict(color='yellow', width=2), name='ADX (14)'), row=4, col=1)
             fig.add_hline(y=20, line_dash="dot", line_color="gray", opacity=0.5, row=4, col=1)
             fig.add_hline(y=25, line_dash="dash", line_color="orange", opacity=0.5, row=4, col=1)
 
-            # --- FILA 5: Connors RSI (CRSI) ---
+            # FILA 5: Connors RSI (CRSI)
             fig.add_trace(go.Scatter(x=df_plot.index, y=crsi.tail(ventanas_dias), line=dict(color='purple', width=2), name='CRSI'), row=5, col=1)
             fig.add_hline(y=80, line_dash="dot", line_color="red", row=5, col=1)
             fig.add_hline(y=20, line_dash="dot", line_color="green", row=5, col=1)
             fig.add_hline(y=50, line_dash="solid", line_color="gray", opacity=0.3, row=5, col=1)
 
-            # --- Configuración Global ---
+            # --- Configuración Global y Exclusión de Fines de Semana ---
             fig.update_layout(
                 xaxis_rangeslider_visible=False,
                 height=1100,
