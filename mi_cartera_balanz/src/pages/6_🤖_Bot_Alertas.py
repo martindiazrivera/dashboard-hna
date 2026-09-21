@@ -266,16 +266,37 @@ with tab_manual:
 with tab_quant:
     st.markdown("### Escáner Multiactivo y Reporte Institucional")
 
-    tickers_cartera = ["YPFD.BA", "GGAL.BA", "PAMP.BA"] 
+    # Ruta para guardar la Watchlist seleccionada
+    ruta_watchlist = os.path.join(os.path.dirname(__file__), "../../data/watchlist.csv")
 
-    st.info("📌 **Activos en Cartera (Prioridad):** Estos activos se escanean para buscar divergencias o toma de ganancias.")
+    def cargar_watchlist():
+        if os.path.exists(ruta_watchlist):
+            df_w = pd.read_csv(ruta_watchlist)
+            return df_w['Ticker'].tolist()
+        else:
+            return ["YPFD.BA", "GGAL.BA", "PAMP.BA"] # Default inicial
+
+    watchlist_actual = cargar_watchlist()
+
+    st.info("📌 **Activos en Cartera y Watchlist:** Estos activos se guardan en la nube para que el motor los escanee automáticamente.")
+    
+    # Multiselect conectado a tu preferencia
     tickers_seleccionados = st.multiselect(
-        "Selecciona los activos para el escáner (Cartera + Watchlist):", 
-        options=list(set(tickers_cartera + ["AAPL.BA", "MELI.BA", "SPY", "QQQ", "AMD.BA", "NVDA.BA", "GOOGL.BA"])),
-        default=tickers_cartera
+        "Selecciona los activos para el escáner:", 
+        options=list(set(watchlist_actual + ["AAPL.BA", "MELI.BA", "SPY", "QQQ", "AMD.BA", "NVDA.BA", "GOOGL.BA"])),
+        default=watchlist_actual
     )
 
-    if st.button("🔍 Ejecutar Escáner Quant y Enviar a Telegram", use_container_width=True):
+    # Botón para guardar la selección para la nube
+    if st.button("💾 Guardar Watchlist para el Bot en la Nube", use_container_width=True):
+        df_nuevo = pd.DataFrame({'Ticker': tickers_seleccionados})
+        os.makedirs(os.path.dirname(ruta_watchlist), exist_ok=True)
+        df_nuevo.to_csv(ruta_watchlist, index=False)
+        st.success("¡Watchlist actualizada y guardada! El motor en la nube la leerá en su próxima ejecución.")
+
+    st.divider()
+
+    if st.button("🔍 Ejecutar Escáner Quant Manual y Enviar a Telegram", use_container_width=True):
         if not tickers_seleccionados:
             st.warning("⚠️ Selecciona al menos un activo para escanear.")
         else:
@@ -288,15 +309,13 @@ with tab_quant:
                         
                     df = df.dropna(subset=['Close'])
                     cierre = df['Close']
-                    high = df['High']
-                    low = df['Low']
                     volume = df['Volume']
                     
                     bb_up, bb_mid, bb_low = bollinger_bands(cierre, 20, 2)
                     crsi = connors_rsi(cierre, 3, 2, 100)
                     emas = calcular_emas(cierre, periodos=[9, 21, 55])
                     
-                    df_plot = df.tail(126).copy() # Ventana de 6 meses para el POC
+                    df_plot = df.tail(126).copy()
                     _, _, poc_price = calcular_perfil_volumen(df_plot, bins=40)
                     
                     last_close = cierre.iloc[-1]
@@ -308,7 +327,6 @@ with tab_quant:
                     
                     alertas_ticker = []
                     
-                    # Reglas Quant (Valores normales operativos)
                     if last_crsi <= 15: alertas_ticker.append(f"🟢 *CRSI Sobrevendido:* {last_crsi:.2f}")
                     elif last_crsi >= 85: alertas_ticker.append(f"🔴 *CRSI Sobrecomprado:* {last_crsi:.2f}")
                         

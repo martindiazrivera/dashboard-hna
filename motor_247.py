@@ -6,11 +6,18 @@ import requests
 import datetime
 
 # --- CONFIGURACIÓN ---
-# Usamos secretos de entorno de GitHub para que no queden tus tokens públicos
 TG_TOKEN = os.environ.get("TG_TOKEN", "8830821591:AAFCA5BTdzZYcckBM8TnTdvWjouoqh4IhyM")
 TG_CHATID = os.environ.get("TG_CHATID", "1051645650")
-# Asegurate de que esta ruta apunte al CSV dentro de tu repo
-RUTA_ALERTAS = "data/alertas_trading.csv" 
+
+# Rutas de los archivos de configuración y alertas
+RUTA_ALERTAS = "data/alertas_trading.csv"
+RUTA_WATCHLIST = "data/watchlist.csv"
+
+def obtener_tickers_a_escanear():
+    if os.path.exists(RUTA_WATCHLIST):
+        df_w = pd.read_csv(RUTA_WATCHLIST)
+        return df_w['Ticker'].tolist()
+    return ["YPFD.BA", "GGAL.BA", "PAMP.BA"]
 
 def enviar_telegram(mensaje):
     url = f"https://api.telegram.org/bot{TG_TOKEN}/sendMessage"
@@ -23,8 +30,9 @@ def enviar_telegram(mensaje):
 def ejecutar_escaner():
     print(f"[{datetime.datetime.now()}] Iniciando escaneo de GitHub Actions...")
     
+    # 1. Escaneo de Trampas Manuales
     if not os.path.exists(RUTA_ALERTAS):
-        print("No se encontró el archivo de alertas.")
+        print("No se encontró el archivo de alertas manuales.")
         return
 
     df = pd.read_csv(RUTA_ALERTAS)
