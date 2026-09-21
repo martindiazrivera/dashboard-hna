@@ -4,9 +4,8 @@ import pandas as pd
 import plotly.graph_objects as go
 from plotly.subplots import make_subplots
 
-# Importamos nuestro motor validado
-from src.utils.datos_mercado import obtener_ohlcv
-from src.utils.indicadores import bollinger_bands, connors_rsi, calcular_emas
+from mi_cartera_balanz.src.utils.datos_mercado import obtener_ohlcv
+from mi_cartera_balanz.src.utils.indicadores import bollinger_bands, connors_rsi, calcular_emas
 
 st.set_page_config(page_title="Análisis Técnico", page_icon="📈", layout="wide")
 st.title("📈 Panel de Análisis Técnico (Quant)")
