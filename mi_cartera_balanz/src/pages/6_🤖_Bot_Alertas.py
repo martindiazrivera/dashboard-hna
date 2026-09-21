@@ -43,7 +43,7 @@ tab_manual, tab_quant, tab_config = st.tabs(["🎯 Trampas de Precio (Manual)", 
 # FUNCIONES DE ENVÍO
 # ==========================================
 def enviar_whatsapp(mensaje):
-    numero = "+34623789580"
+    numero = "5493855242407"
     api_key = "3891226"
     url = "https://api.callmebot.com/whatsapp.php"
     parametros = {
