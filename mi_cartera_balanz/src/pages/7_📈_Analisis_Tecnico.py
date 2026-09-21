@@ -129,14 +129,17 @@ if analizar_btn or ticker_input:
             ao_tail = ao.tail(120)
             colors_ao = ['green' if val > 0 else 'red' for val in ao_tail]
             
-            # Calculamos el Perfil de Volumen para el período visible
+            # Calculamos el Perfil de Volumen
             bin_centers, bin_volumes, poc_price = calcular_perfil_volumen(df_plot, bins=40)
             
-            # Normalizamos el volumen horizontal para que no tape las velas (ocupa un 25% del ancho del gráfico)
+            # Normalizamos el volumen horizontal de forma puramente numérica (0 a 1)
             max_vol_profile = bin_volumes.max() if bin_volumes.max() > 0 else 1
-            scaled_volumes = (bin_volumes / max_vol_profile) * (df_plot.index[-1] - df_plot.index[0]) * 0.25
+            normalized_profile = (bin_volumes / max_vol_profile) * len(df_plot) * 0.3
             
-            # 5 Subplots: Precio + Perfil | Volumen | AO | ADX | CRSI
+            # Usamos una fecha hacia el final del índice para anclar el perfil horizontal
+            profile_x_anchor = [df_plot.index[int(len(df_plot) * 0.75)]] * len(bin_centers)
+
+            # 5 Subplots
             fig = make_subplots(
                 rows=5, cols=1, 
                 shared_xaxes=True, 
@@ -145,10 +148,10 @@ if analizar_btn or ticker_input:
             )
 
             # --- FILA 1: Precio + Bollinger + EMAs + Perfil de Volumen + POC ---
-            # Perfil de Volumen horizontal (Barras laterales translúcidas)
+            # Perfil de Volumen horizontal seguro (evita conflictos de fechas)
             fig.add_trace(go.Bar(
-                x=scaled_volumes, y=bin_centers, orientation='h',
-                marker_color='rgba(41, 98, 255, 0.3)', name='Perfil Volumen',
+                x=normalized_profile, y=bin_centers, orientation='h',
+                marker_color='rgba(41, 98, 255, 0.25)', name='Perfil Volumen',
                 hoverinfo='skip'
             ), row=1, col=1)
 
