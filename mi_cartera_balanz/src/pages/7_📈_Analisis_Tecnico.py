@@ -120,12 +120,12 @@ if analizar_btn or ticker_input:
 
             st.divider()
             
-            # --- 4. Gráfico Interactivo de Alta Fidelidad (5 Paneles estilo Investing) ---
-            st.markdown("### Gráfico Cuantitativo (Estilo TradingView)")
+            # --- 4. Gráfico Interactivo de Alta Fidelidad (5 Paneles estilo Institucional) ---
+            st.markdown("### Gráfico Cuantitativo (Estilo Institucional)")
             
             df_plot = df.tail(120).copy() 
             vol_tail = df_plot['Volume']
-            vol_sma = vol_tail.rolling(window=20).mean().tail(120) # SMA de Volumen 20
+            vol_sma = vol_tail.rolling(window=20).mean().tail(120)
             ao_tail = ao.tail(120)
             colors_ao = ['green' if val > 0 else 'red' for val in ao_tail]
             
@@ -142,6 +142,17 @@ if analizar_btn or ticker_input:
                 x=df_plot.index, open=df_plot['Open'], high=df_plot['High'],
                 low=df_plot['Low'], close=df_plot['Close'], name="Precio"
             ), row=1, col=1)
+
+            # Calculamos el POC matemático con la función que ya tenemos
+            _, bin_volumes, poc_price = calcular_perfil_volumen(df_plot, bins=40)
+
+            # Línea horizontal institucional del POC cruzando todo el gráfico
+            fig.add_hline(
+                y=poc_price, line_dash="dash", line_color="#ff9800", 
+                annotation_text=f"POC Institucional: $ {poc_price:,.2f}", 
+                annotation_position="top left",
+                row=1, col=1
+            )
 
             fig.add_trace(go.Scatter(x=df_plot.index, y=bb_up.tail(120), line=dict(color='rgba(173, 204, 255, 0.5)', width=1), name='BB Sup'), row=1, col=1)
             fig.add_trace(go.Scatter(x=df_plot.index, y=bb_low.tail(120), line=dict(color='rgba(173, 204, 255, 0.5)', width=1), fill='tonexty', fillcolor='rgba(173, 204, 255, 0.1)', name='BB Inf'), row=1, col=1)
@@ -172,7 +183,7 @@ if analizar_btn or ticker_input:
             # --- Configuración Global ---
             fig.update_layout(
                 xaxis_rangeslider_visible=False,
-                height=1100, # Altura generosa para que entren los 5 paneles cómodos
+                height=1100,
                 margin=dict(l=0, r=0, t=30, b=0),
                 template="plotly_dark",
                 hovermode="x unified"
