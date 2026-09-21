@@ -117,3 +117,90 @@ def connors_rsi(close_series, rsi_period=3, streak_rsi_period=2, roc_period=100)
     
     crsi = (rsi_close + rsi_streak + percent_rank_series) / 3
     return crsi
+
+# --- FASE 3: Osciladores de Fuerza (AO y ADX) ---
+
+def awesome_oscillator(high, low):
+    """
+    Calcula el Awesome Oscillator (AO).
+    AO = SMA(Medio, 5) - SMA(Medio, 34)
+    donde Medio = (High + Low) / 2
+    """
+    median_price = (high + low) / 2
+    sma_5 = median_price.rolling(window=5).mean()
+    sma_34 = median_price.rolling(window=34).mean()
+    ao = sma_5 - sma_34
+    return ao
+
+def adx(high, low, close, period=14):
+    """
+    Calcula el Average Directional Index (ADX).
+    """
+    # 1. True Range (TR)
+    tr1 = high - low
+    tr2 = (high - close.shift(1)).abs()
+    tr3 = (low - close.shift(1)).abs()
+    tr = pd.concat([tr1, tr2, tr3], axis=1).max(axis=1)
+    
+    # 2. Directional Movement (DM+ y DM-)
+    up_move = high - high.shift(1)
+    down_move = low.shift(1) - low
+    
+    plus_dm = np.where((up_move > down_move) & (up_move > 0), up_move, 0.0)
+    minus_dm = np.where((down_move > up_move) & (down_move > 0), down_move, 0.0)
+    
+    plus_dm = pd.Series(plus_dm, index=close.index)
+    minus_dm = pd.Series(minus_dm, index=close.index)
+    
+    # 3. Suavizado (RMA) idéntico a TradingView
+    # Usamos np.full para evitar el ValueError read-only
+    rma_tr = np.full(len(close), np.nan)
+    rma_plus_dm = np.full(len(close), np.nan)
+    rma_minus_dm = np.full(len(close), np.nan)
+    
+    # Semilla inicial (SMA de los primeros 'period' días)
+    sma_tr = tr.rolling(window=period).mean()
+    sma_plus = plus_dm.rolling(window=period).mean()
+    sma_minus = minus_dm.rolling(window=period).mean()
+    
+    first_valid = sma_tr.first_valid_index()
+    if first_valid is not None:
+        idx = close.index.get_loc(first_valid)
+        rma_tr[idx] = sma_tr.iloc[idx]
+        rma_plus_dm[idx] = sma_plus.iloc[idx]
+        rma_minus_dm[idx] = sma_minus.iloc[idx]
+        
+        alpha = 1 / period
+        tr_vals = tr.values
+        plus_vals = plus_dm.values
+        minus_vals = minus_dm.values
+        
+        for i in range(idx + 1, len(close)):
+            rma_tr[i] = alpha * tr_vals[i] + (1 - alpha) * rma_tr[i-1]
+            rma_plus_dm[i] = alpha * plus_vals[i] + (1 - alpha) * rma_plus_dm[i-1]
+            rma_minus_dm[i] = alpha * minus_vals[i] + (1 - alpha) * rma_minus_dm[i-1]
+            
+    rma_tr = pd.Series(rma_tr, index=close.index)
+    rma_plus_dm = pd.Series(rma_plus_dm, index=close.index)
+    rma_minus_dm = pd.Series(rma_minus_dm, index=close.index)
+    
+    # 4. Directional Indicators (+DI y -DI)
+    plus_di = 100 * (rma_plus_dm / rma_tr)
+    minus_di = 100 * (rma_minus_dm / rma_tr)
+    
+    # 5. Directional Movement Index (DX) y ADX final
+    dx = 100 * (plus_di - minus_di).abs() / (plus_di + minus_di)
+    
+    # El ADX es una RMA del DX
+    adx_array = np.full(len(close), np.nan)
+    sma_dx = dx.rolling(window=period).mean()
+    first_valid_dx = sma_dx.first_valid_index()
+    
+    if first_valid_dx is not None:
+        idx_dx = close.index.get_loc(first_valid_dx)
+        adx_array[idx_dx] = sma_dx.iloc[idx_dx]
+        dx_vals = dx.values
+        for i in range(idx_dx + 1, len(close)):
+            adx_array[i] = alpha * dx_vals[i] + (1 - alpha) * adx_array[i-1]
+            
+    return pd.Series(adx_array, index=close.index)
