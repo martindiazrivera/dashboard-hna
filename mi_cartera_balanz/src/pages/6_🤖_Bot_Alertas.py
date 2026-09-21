@@ -295,8 +295,15 @@ with tab_quant:
 
     def cargar_watchlist():
         if os.path.exists(ruta_watchlist):
-            df_w = pd.read_csv(ruta_watchlist)
-            return df_w['Ticker'].tolist()
+            try:
+                df_w = pd.read_csv(ruta_watchlist)
+                # Validar si el archivo está vacío o no tiene la columna Ticker
+                if df_w.empty or 'Ticker' not in df_w.columns:
+                    return ["YPFD.BA", "GGAL.BA", "PAMP.BA"]
+                return df_w['Ticker'].tolist()
+            except pd.errors.EmptyDataError:
+                # Si el archivo está vacío, devolvemos los valores por defecto
+                return ["YPFD.BA", "GGAL.BA", "PAMP.BA"]
         else:
             return ["YPFD.BA", "GGAL.BA", "PAMP.BA"]
 
