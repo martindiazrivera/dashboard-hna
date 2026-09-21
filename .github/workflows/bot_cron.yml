@@ -1,0 +1,35 @@
+name: Bot Quant Balanz
+
+# Esto le dice a GitHub que corra el script cada 15 minutos de lunes a viernes
+on:
+  schedule:
+    - cron: '*/15 * * * 1-5'
+  workflow_dispatch: # Permite correrlo a mano para probar
+
+jobs:
+  escanear_mercado:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Descargar mi código
+      uses: actions/checkout@v3
+
+    - name: Configurar Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.10'
+        
+    - name: Instalar librerías
+      run: |
+        pip install pandas yfinance requests
+        
+    - name: Ejecutar Motor Cuantitativo
+      run: python motor_247.py
+      
+    - name: Guardar estado de las alertas (Si alguna se cumplió)
+      run: |
+        git config --global user.name "Bot Cuantitativo"
+        git config --global user.email "bot@quant.com"
+        git add data/alertas_trading.csv
+        # Solo hace commit si el archivo cambió (una alerta se cumplió)
+        git diff --quiet && git diff --staged --quiet || (git commit -m "Actualización automática de estado de alerta" && git push)
