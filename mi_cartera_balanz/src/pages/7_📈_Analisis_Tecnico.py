@@ -59,7 +59,8 @@ if analizar_btn or ticker_input:
             emas = calcular_emas(cierre, periodos=[9, 21, 55])
             ao = awesome_oscillator(high, low)
             adx_series = adx(high, low, cierre, 14)
-            _, _, poc_price = calcular_perfil_volumen(df, bins=40)
+            df_plot = df.tail(120).copy()
+            _, _, poc_price = calcular_perfil_volumen(df_plot, bins=40)
             
             # Últimos valores
             last_date = df.index[-1].strftime('%d/%m/%Y')
@@ -150,8 +151,7 @@ if analizar_btn or ticker_input:
             
             # --- 5. Gráfico Interactivo de Alta Fidelidad (5 Paneles) ---
             st.markdown("### Gráfico Cuantitativo (Estilo Institucional)")
-            
-            df_plot = df.tail(120).copy() 
+             
             vol_tail = df_plot['Volume']
             vol_sma = vol_tail.rolling(window=20).mean().tail(120)
             ao_tail = ao.tail(120)
