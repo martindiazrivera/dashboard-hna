@@ -182,11 +182,14 @@ if analizar_btn or ticker_input:
 
             # --- Configuración Global ---
             fig.update_layout(
-                xaxis_rangeslider_visible=False,
-                height=1100,
-                margin=dict(l=0, r=0, t=30, b=0),
-                template="plotly_dark",
-                hovermode="x unified"
-            )
+    xaxis_rangeslider_visible=False,
+    height=1100,
+    margin=dict(l=0, r=0, t=30, b=0),
+    template="plotly_dark",
+    hovermode="x unified",
+    xaxis_rangebreaks=[
+        dict(bounds=["sat", "mon"]) # Oculta automáticamente los fines de semana
+    ]
+)
             
             st.plotly_chart(fig, use_container_width=True)
