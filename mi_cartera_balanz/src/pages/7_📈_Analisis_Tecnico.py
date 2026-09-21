@@ -145,6 +145,17 @@ if analizar_btn or ticker_input:
                 low=df_plot['Low'], close=df_plot['Close'], name="Precio"
             ), row=1, col=1)
 
+            # Calculamos el POC matemático con la función que ya tenemos
+            _, bin_volumes, poc_price = calcular_perfil_volumen(df_plot, bins=40)
+
+            # Línea horizontal institucional del POC cruzando todo el gráfico
+            fig.add_hline(
+                y=poc_price, line_dash="dash", line_color="#ff9800", 
+                annotation_text=f"POC Institucional: $ {poc_price:,.2f}", 
+                annotation_position="top left",
+                row=1, col=1
+            )
+
             fig.add_trace(go.Scatter(x=df_plot.index, y=bb_up.tail(120), line=dict(color='rgba(173, 204, 255, 0.5)', width=1), name='BB Sup'), row=1, col=1)
             fig.add_trace(go.Scatter(x=df_plot.index, y=bb_low.tail(120), line=dict(color='rgba(173, 204, 255, 0.5)', width=1), fill='tonexty', fillcolor='rgba(173, 204, 255, 0.1)', name='BB Inf'), row=1, col=1)
             fig.add_trace(go.Scatter(x=df_plot.index, y=bb_mid.tail(120), line=dict(color='orange', width=1.5, dash='dash'), name='BB Media'), row=1, col=1)
