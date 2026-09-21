@@ -10,16 +10,30 @@ st.set_page_config(page_title="Bot de Alertas", page_icon="🤖", layout="wide")
 
 # --- FUNCIÓN DE GIT PARA SINCRONIZAR CON LA NUBE ---
 def sincronizar_con_github(mensaje_commit="Actualización automática desde Streamlit"):
-    """Fuerza un git add, commit y push desde Streamlit hacia GitHub"""
+    """Fuerza un git add, commit y push asegurando rutas absolutas"""
     try:
+        # Rutas absolutas basadas en la ubicación del script actual
+        base_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), "../../"))
+        path_alertas = os.path.join(base_dir, "data/alertas_trading.csv")
+        path_watchlist = os.path.join(base_dir, "data/watchlist.csv")
+
         subprocess.run(["git", "config", "--global", "user.name", "Streamlit Bot"], check=True)
         subprocess.run(["git", "config", "--global", "user.email", "bot@streamlit.com"], check=True)
-        subprocess.run(["git", "add", "data/alertas_trading.csv", "data/watchlist.csv"], check=True)
-        status = subprocess.run(["git", "diff", "--staged", "--quiet"])
-        if status.returncode != 0: # Hay cambios para guardar
-            subprocess.run(["git", "commit", "-m", mensaje_commit], check=True)
-            subprocess.run(["git", "push"], check=True)
-            return True
+        
+        # Agregamos los archivos si existen y no están vacíos
+        archivos_a_agregar = []
+        if os.path.exists(path_alertas) and os.path.getsize(path_alertas) > 0:
+            archivos_a_agregar.append(path_alertas)
+        if os.path.exists(path_watchlist) and os.path.getsize(path_watchlist) > 0:
+            archivos_a_agregar.append(path_watchlist)
+            
+        if archivos_a_agregar:
+            subprocess.run(["git", "add"] + archivos_a_agregar, check=True)
+            status = subprocess.run(["git", "diff", "--staged", "--quiet"])
+            if status.returncode != 0: # Hay cambios reales
+                subprocess.run(["git", "commit", "-m", mensaje_commit], check=True)
+                subprocess.run(["git", "push"], check=True)
+                return True
     except Exception as e:
         print(f"Error sincronizando con Git: {e}")
     return False
