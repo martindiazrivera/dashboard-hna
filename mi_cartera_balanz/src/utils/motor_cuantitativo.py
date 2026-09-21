@@ -7,17 +7,25 @@ import requests
 warnings.filterwarnings('ignore')
 
 class MotorCuantitativo:
-    def __init__(self, data_dir="data"):
-        if os.path.exists(os.path.join(data_dir, "boletos.xlsx")):
-            self.data_dir = data_dir
-        elif os.path.exists(os.path.join("..", data_dir, "boletos.xlsx")):
-            self.data_dir = os.path.join("..", data_dir)
-        elif os.path.exists(os.path.join("../..", data_dir, "boletos.xlsx")):
-            self.data_dir = os.path.join("../..", data_dir)
+    def __init__(self):
+        # Ubicación absoluta basada en este archivo (src/utils/motor_cuantitativo.py)
+        dir_actual = os.path.dirname(os.path.abspath(__file__))
+        
+        # Apuntamos directamente a mi_cartera_balanz/data/ subiendo dos niveles desde utils/
+        ruta_base_proyecto = os.path.abspath(os.path.join(dir_actual, "../../data"))
+        
+        # Si por estructura de despliegue la carpeta data está en la raíz de ejecución:
+        if os.path.exists(os.path.join(ruta_base_proyecto, "boletos.xlsx")):
+            self.data_dir = ruta_base_proyecto
         else:
-            dir_actual = os.path.dirname(os.path.abspath(__file__))
-            self.data_dir = os.path.join(dir_actual, "../../", data_dir)
-            
+            # Rutas de respaldo por si Streamlit corre desde la raíz del repo
+            posibles = ["data", "mi_cartera_balanz/data", "../data", "../../data"]
+            self.data_dir = "data"
+            for p in posibles:
+                if os.path.exists(os.path.join(p, "boletos.xlsx")):
+                    self.data_dir = p
+                    break
+
         self.ruta_boletos = os.path.join(self.data_dir, "boletos.xlsx")
         self.ruta_movimientos = os.path.join(self.data_dir, "movimientos.xlsx")
         self.ruta_cta_cte = os.path.join(self.data_dir, "cuentacorriente.xlsx")
