@@ -148,32 +148,33 @@ if analizar_btn or ticker_input:
             )
 
             # --- FILA 1: Precio + Bollinger + EMAs + Perfil de Volumen + POC ---
-            # Perfil de Volumen horizontal seguro (evita conflictos de fechas)
-            fig.add_trace(go.Bar(
-                x=normalized_profile, y=bin_centers, orientation='h',
-                marker_color='rgba(41, 98, 255, 0.25)', name='Perfil Volumen',
-                hoverinfo='skip'
-            ), row=1, col=1)
-
-            # Línea horizontal del POC (Point of Control)
-            fig.add_hline(
-                y=poc_price, line_dash="dash", line_color="#ff9800", 
-                annotation_text=f"POC: $ {poc_price:,.2f}", annotation_position="top left",
-                row=1, col=1
-            )
-
-            # Velas japonesas
+            
+            # 1. PRIMERO: Las Velas Japonesas (Para que queden al frente)
             fig.add_trace(go.Candlestick(
                 x=df_plot.index, open=df_plot['Open'], high=df_plot['High'],
                 low=df_plot['Low'], close=df_plot['Close'], name="Precio"
             ), row=1, col=1)
 
-            # Indicadores de Precio
+            # 2. SEGUNDO: Indicadores de Precio y Tendencia
             fig.add_trace(go.Scatter(x=df_plot.index, y=bb_up.tail(120), line=dict(color='rgba(173, 204, 255, 0.5)', width=1), name='BB Sup'), row=1, col=1)
             fig.add_trace(go.Scatter(x=df_plot.index, y=bb_low.tail(120), line=dict(color='rgba(173, 204, 255, 0.5)', width=1), fill='tonexty', fillcolor='rgba(173, 204, 255, 0.1)', name='BB Inf'), row=1, col=1)
             fig.add_trace(go.Scatter(x=df_plot.index, y=bb_mid.tail(120), line=dict(color='orange', width=1.5, dash='dash'), name='BB Media'), row=1, col=1)
             fig.add_trace(go.Scatter(x=df_plot.index, y=emas['EMA_9'].tail(120), line=dict(color='blue', width=1.5), name='EMA 9'), row=1, col=1)
             fig.add_trace(go.Scatter(x=df_plot.index, y=emas['EMA_55'].tail(120), line=dict(color='red', width=2), name='EMA 55'), row=1, col=1)
+
+            # 3. TERCERO: El Perfil de Volumen por detrás (Con menor opacidad)
+            fig.add_trace(go.Bar(
+                x=normalized_profile, y=bin_centers, orientation='h',
+                marker_color='rgba(41, 98, 255, 0.15)', name='Perfil Volumen',
+                hoverinfo='skip'
+            ), row=1, col=1)
+
+            # 4. CUARTO: Línea horizontal del POC
+            fig.add_hline(
+                y=poc_price, line_dash="dash", line_color="#ff9800", 
+                annotation_text=f"POC: $ {poc_price:,.2f}", annotation_position="top left",
+                row=1, col=1
+            )
 
             # --- FILA 2: Volumen + SMA Volumen (20) ---
             vol_colors = ['rgba(38, 166, 154, 0.6)' if row['Close'] >= row['Open'] else 'rgba(239, 83, 80, 0.6)' for index, row in df_plot.iterrows()]
