@@ -28,6 +28,8 @@ if analizar_btn or ticker_input:
         if df is None or df.empty:
             st.error(f"❌ No se encontraron datos para el ticker {ticker_input}. Verificá el símbolo.")
         else:
+            # Limpiamos filas vacías fantasmas que manda Yahoo Finance los fines de semana
+            df = df.dropna(subset=['Close'])
             cierre = df['Close']
             
             # --- 2. Cálculos Matemáticos ---
@@ -35,12 +37,12 @@ if analizar_btn or ticker_input:
             crsi = connors_rsi(cierre, 3, 2, 100)
             emas = calcular_emas(cierre, periodos=[9, 21, 55])
             
-            # Extraemos el último valor para la tabla resumen
+            # Extraemos el último valor válido para la tabla resumen
             last_close = cierre.iloc[-1]
             last_bb_up = bb_up.iloc[-1]
             last_bb_mid = bb_mid.iloc[-1]
             last_bb_low = bb_low.iloc[-1]
-            last_crsi = crsi.iloc[-1]
+            last_crsi = crsi.dropna().iloc[-1] # Dropna extra por seguridad en el CRSI
             last_ema9 = emas['EMA_9'].iloc[-1]
             last_ema21 = emas['EMA_21'].iloc[-1]
             last_ema55 = emas['EMA_55'].iloc[-1]
