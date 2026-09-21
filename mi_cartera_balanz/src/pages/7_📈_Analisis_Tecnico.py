@@ -120,8 +120,6 @@ if analizar_btn or ticker_input:
 
             st.divider()
             
-            st.divider()
-            
             # --- 4. Gráfico Interactivo de Alta Fidelidad (5 Paneles estilo Institucional) ---
             st.markdown("### Gráfico Cuantitativo (Estilo Institucional)")
             
