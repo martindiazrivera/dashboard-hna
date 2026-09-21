@@ -132,12 +132,12 @@ if analizar_btn or ticker_input:
             # Calculamos el Perfil de Volumen
             bin_centers, bin_volumes, poc_price = calcular_perfil_volumen(df_plot, bins=40)
             
-            # Normalizamos el volumen horizontal de forma puramente numérica (0 a 1)
+            # Normalizamos el volumen y lo convertimos a días para que encaje en el eje temporal
             max_vol_profile = bin_volumes.max() if bin_volumes.max() > 0 else 1
-            normalized_profile = (bin_volumes / max_vol_profile) * len(df_plot) * 0.3
+            profile_widths_days = (bin_volumes / max_vol_profile) * 25  # Ancho máximo de 25 días
             
-            # Usamos una fecha hacia el final del índice para anclar el perfil horizontal
-            profile_x_anchor = [df_plot.index[int(len(df_plot) * 0.75)]] * len(bin_centers)
+            start_date = df_plot.index[0]
+            end_dates = start_date + pd.to_timedelta(profile_widths_days, unit='D')
 
             # 5 Subplots
             fig = make_subplots(
@@ -149,27 +149,27 @@ if analizar_btn or ticker_input:
 
             # --- FILA 1: Precio + Bollinger + EMAs + Perfil de Volumen + POC ---
             
-            # 1. PRIMERO: Las Velas Japonesas (Para que queden al frente)
+            # 1. Las Velas Japonesas al frente
             fig.add_trace(go.Candlestick(
                 x=df_plot.index, open=df_plot['Open'], high=df_plot['High'],
                 low=df_plot['Low'], close=df_plot['Close'], name="Precio"
             ), row=1, col=1)
 
-            # 2. SEGUNDO: Indicadores de Precio y Tendencia
+            # 2. Indicadores de Precio y Tendencia
             fig.add_trace(go.Scatter(x=df_plot.index, y=bb_up.tail(120), line=dict(color='rgba(173, 204, 255, 0.5)', width=1), name='BB Sup'), row=1, col=1)
             fig.add_trace(go.Scatter(x=df_plot.index, y=bb_low.tail(120), line=dict(color='rgba(173, 204, 255, 0.5)', width=1), fill='tonexty', fillcolor='rgba(173, 204, 255, 0.1)', name='BB Inf'), row=1, col=1)
             fig.add_trace(go.Scatter(x=df_plot.index, y=bb_mid.tail(120), line=dict(color='orange', width=1.5, dash='dash'), name='BB Media'), row=1, col=1)
             fig.add_trace(go.Scatter(x=df_plot.index, y=emas['EMA_9'].tail(120), line=dict(color='blue', width=1.5), name='EMA 9'), row=1, col=1)
             fig.add_trace(go.Scatter(x=df_plot.index, y=emas['EMA_55'].tail(120), line=dict(color='red', width=2), name='EMA 55'), row=1, col=1)
 
-            # 3. TERCERO: El Perfil de Volumen por detrás (Con menor opacidad)
+            # 3. Perfil de Volumen horizontal alineado correctamente con las fechas
             fig.add_trace(go.Bar(
-                x=normalized_profile, y=bin_centers, orientation='h',
+                x=end_dates, y=bin_centers, orientation='h', base=start_date,
                 marker_color='rgba(41, 98, 255, 0.15)', name='Perfil Volumen',
                 hoverinfo='skip'
             ), row=1, col=1)
 
-            # 4. CUARTO: Línea horizontal del POC
+            # 4. Línea horizontal del POC
             fig.add_hline(
                 y=poc_price, line_dash="dash", line_color="#ff9800", 
                 annotation_text=f"POC: $ {poc_price:,.2f}", annotation_position="top left",
