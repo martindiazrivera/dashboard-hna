@@ -204,3 +204,41 @@ def adx(high, low, close, period=14):
             adx_array[i] = alpha * dx_vals[i] + (1 - alpha) * adx_array[i-1]
             
     return pd.Series(adx_array, index=close.index)
+
+def calcular_perfil_volumen(df, bins=50):
+    """
+    Calcula el Perfil de Volumen (Volume Profile) vertical/horizontal 
+    agrupando el volumen por niveles de precio.
+    """
+    highs = df['High']
+    lows = df['Low']
+    vols = df['Volume']
+    
+    min_price = lows.min()
+    max_price = highs.max()
+    
+    # Creamos los 'bins' o franjas de precio
+    price_bins = np.linspace(min_price, max_price, bins)
+    bin_volumes = np.zeros(bins - 1)
+    
+    # Distribuimos el volumen de cada vela en las franjas que tocó
+    for h, l, v in zip(highs, lows, vols):
+        if h == l:
+            continue
+        # En qué franjas cae esta vela
+        mask = (price_bins[:-1] >= l) & (price_bins[1:] <= h) | \
+               (price_bins[:-1] <= h) & (price_bins[1:] >= l)
+        
+        if mask.sum() > 0:
+            # Distribuimos el volumen equitativamente entre los niveles tocados
+            vol_per_bin = v / mask.sum()
+            bin_volumes[mask] += vol_per_bin
+            
+    # Precios medios de cada bin para graficar
+    bin_centers = (price_bins[:-1] + price_bins[1:]) / 2
+    
+    # Identificamos el POC (Point of Control: el precio con más volumen)
+    poc_idx = np.argmax(bin_volumes)
+    poc_price = bin_centers[poc_idx]
+    
+    return bin_centers, bin_volumes, poc_price
