@@ -11,8 +11,17 @@ st.set_page_config(page_title="Análisis Técnico", page_icon="📈", layout="wi
 st.title("📈 Panel de Análisis Técnico (Quant)")
 
 # --- Helper para Métricas de Color ---
-def metric_color(label, value, color="white", is_currency=False):
-    val_str = f"$ {value:,.2f}" if is_currency else f"{value:,.2f}"
+def metric_color(label, value, color="white", is_currency=False, is_volume=False):
+    if is_currency:
+        val_str = f"$ {value:,.2f}"
+    elif is_volume:
+        if value >= 1e6:
+            val_str = f"{value/1e6:,.2f} M"
+        else:
+            val_str = f"{value:,.0f}"
+    else:
+        val_str = f"{value:,.2f}"
+
     html = f"""
     <div style="line-height: 1.2; margin-bottom: 15px;">
         <span style="font-size: 14px; font-weight: 600; color: #a5a5a5;">{label}</span><br>
@@ -42,6 +51,7 @@ if analizar_btn or ticker_input:
             cierre = df['Close']
             high = df['High']
             low = df['Low']
+            volume = df['Volume']
             
             # --- 2. Cálculos Matemáticos ---
             bb_up, bb_mid, bb_low = bollinger_bands(cierre, 20, 2)
@@ -49,6 +59,7 @@ if analizar_btn or ticker_input:
             emas = calcular_emas(cierre, periodos=[9, 21, 55])
             ao = awesome_oscillator(high, low)
             adx_series = adx(high, low, cierre, 14)
+            _, _, poc_price = calcular_perfil_volumen(df, bins=40)
             
             # Últimos valores
             last_date = df.index[-1].strftime('%d/%m/%Y')
@@ -64,22 +75,25 @@ if analizar_btn or ticker_input:
             last_ao = ao.iloc[-1]
             prev_ao = ao.iloc[-2]
             
+            last_vol = volume.iloc[-1]
+            vol_sma20 = volume.rolling(window=20).mean().iloc[-1]
+            
             # --- 3. LÓGICA DE COLORES (SEMÁFORO) ---
             # 3.1 CRSI
-            if last_crsi >= 90 or last_crsi <= 10: color_crsi = "#ff4b4b" # Rojo
-            elif last_crsi >= 70 or last_crsi < 30: color_crsi = "#faca2b" # Amarillo
+            if last_crsi >= 90 or last_crsi <= 10: color_crsi = "#ff4b4b"
+            elif last_crsi >= 70 or last_crsi < 30: color_crsi = "#faca2b"
             else: color_crsi = "white"
 
             # 3.2 Bollinger (%B)
             pb = (last_close - last_bb_low) / (last_bb_up - last_bb_low)
-            if pb >= 1.0 or pb <= 0.0: color_bb = "#ff4b4b" # Rompió banda (Rojo)
-            elif pb >= 0.85 or pb <= 0.15: color_bb = "#faca2b" # Muy cerca (Amarillo)
+            if pb >= 1.0 or pb <= 0.0: color_bb = "#ff4b4b"
+            elif pb >= 0.85 or pb <= 0.15: color_bb = "#faca2b"
             else: color_bb = "white"
 
-            # 3.3 EMAs (Alineación)
-            if last_ema9 > last_ema21 > last_ema55: color_ema = "white" # Tendencia alcista clara
-            elif last_ema9 < last_ema21 < last_ema55: color_ema = "#ff4b4b" # Tendencia bajista clara
-            else: color_ema = "#faca2b" # Cruzadas / Transición
+            # 3.3 EMAs
+            if last_ema9 > last_ema21 > last_ema55: color_ema = "white"
+            elif last_ema9 < last_ema21 < last_ema55: color_ema = "#ff4b4b"
+            else: color_ema = "#faca2b"
 
             # 3.4 ADX y AO
             if last_adx < 20: color_adx = "#ff4b4b"
@@ -87,14 +101,22 @@ if analizar_btn or ticker_input:
             else: color_adx = "white"
             
             if (last_ao > 0 and last_ao > prev_ao) or (last_ao < 0 and last_ao < prev_ao): 
-                color_ao = "white" # Acelerando tendencia
+                color_ao = "white"
             else: 
-                color_ao = "#faca2b" # Perdiendo momento
-            
-            # --- 4. Panel Visual ---
+                color_ao = "#faca2b"
+
+            # 3.5 Volumen y POC
+            if last_vol > (vol_sma20 * 1.5): color_vol = "#2ecc71" # Volumen institucional alto (Verde)
+            elif last_vol < vol_sma20: color_vol = "#ff4b4b" # Volumen seco (Rojo)
+            else: color_vol = "white"
+
+            if last_close > poc_price: color_poc = "#2ecc71" # Arriba del POC (Alcista)
+            else: color_poc = "#ff4b4b" # Abajo del POC (Bajista)
+
+            # --- 4. Panel Visual (5 Columnas) ---
             st.markdown(f"### Valores Actuales (Cierre: {last_date})")
             
-            m_col1, m_col2, m_col3, m_col4 = st.columns(4)
+            m_col1, m_col2, m_col3, m_col4, m_col5 = st.columns(5)
             with m_col1:
                 st.info(f"**Precio:** $ {last_close:,.2f}")
                 st.write(f"**Bollinger (20, 2)**")
@@ -105,7 +127,7 @@ if analizar_btn or ticker_input:
             with m_col2:
                 st.warning(f"**Osciladores**")
                 metric_color("Connors RSI", last_crsi, color=color_crsi)
-                st.markdown(f"<div style='margin-top: 20px; font-size: 12px; color: {color_bb};'>• Precio vs Bandas (Alerta: Color)</div>", unsafe_allow_html=True)
+                st.markdown(f"<div style='margin-top: 20px; font-size: 12px; color: {color_bb};'>• Precio vs Bandas</div>", unsafe_allow_html=True)
                 
             with m_col3:
                 st.success(f"**Tendencia (EMAs)**")
@@ -116,11 +138,17 @@ if analizar_btn or ticker_input:
             with m_col4:
                 st.error(f"**Fuerza (Momento)**")
                 metric_color("ADX (14)", last_adx, color=color_adx)
-                metric_color("Awesome Osc (AO)", last_ao, color=color_ao)
+                metric_color("Awesome Osc", last_ao, color=color_ao)
+
+            with m_col5:
+                st.markdown("### **Volumen & POC**")
+                metric_color("Volumen Diario", last_vol, color=color_vol, is_volume=True)
+                metric_color("Vol SMA (20)", vol_sma20, color="white", is_volume=True)
+                metric_color("POC Inst.", poc_price, color=color_poc, is_currency=True)
 
             st.divider()
             
-            # --- 4. Gráfico Interactivo de Alta Fidelidad (5 Paneles estilo Institucional) ---
+            # --- 5. Gráfico Interactivo de Alta Fidelidad (5 Paneles) ---
             st.markdown("### Gráfico Cuantitativo (Estilo Institucional)")
             
             df_plot = df.tail(120).copy() 
@@ -129,7 +157,6 @@ if analizar_btn or ticker_input:
             ao_tail = ao.tail(120)
             colors_ao = ['green' if val > 0 else 'red' for val in ao_tail]
             
-            # 5 Subplots: Precio | Volumen | AO | ADX | CRSI
             fig = make_subplots(
                 rows=5, cols=1, 
                 shared_xaxes=True, 
@@ -137,20 +164,15 @@ if analizar_btn or ticker_input:
                 row_heights=[0.40, 0.15, 0.15, 0.15, 0.15]
             )
 
-            # --- FILA 1: Precio + Bollinger + EMAs ---
+            # --- FILA 1: Precio + Bollinger + EMAs + POC ---
             fig.add_trace(go.Candlestick(
                 x=df_plot.index, open=df_plot['Open'], high=df_plot['High'],
                 low=df_plot['Low'], close=df_plot['Close'], name="Precio"
             ), row=1, col=1)
 
-            # Calculamos el POC matemático con la función que ya tenemos
-            _, bin_volumes, poc_price = calcular_perfil_volumen(df_plot, bins=40)
-
-            # Línea horizontal institucional del POC cruzando todo el gráfico
             fig.add_hline(
                 y=poc_price, line_dash="dash", line_color="#ff9800", 
-                annotation_text=f"POC Institucional: $ {poc_price:,.2f}", 
-                annotation_position="top left",
+                annotation_text=f"POC: $ {poc_price:,.2f}", annotation_position="top left",
                 row=1, col=1
             )
 
@@ -182,14 +204,14 @@ if analizar_btn or ticker_input:
 
             # --- Configuración Global ---
             fig.update_layout(
-    xaxis_rangeslider_visible=False,
-    height=1100,
-    margin=dict(l=0, r=0, t=30, b=0),
-    template="plotly_dark",
-    hovermode="x unified",
-    xaxis_rangebreaks=[
-        dict(bounds=["sat", "mon"]) # Oculta automáticamente los fines de semana
-    ]
-)
+                xaxis_rangeslider_visible=False,
+                height=1100,
+                margin=dict(l=0, r=0, t=30, b=0),
+                template="plotly_dark",
+                hovermode="x unified",
+                xaxis_rangebreaks=[
+                    dict(bounds=["sat", "mon"])
+                ]
+            )
             
             st.plotly_chart(fig, use_container_width=True)
