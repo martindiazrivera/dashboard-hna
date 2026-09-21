@@ -207,37 +207,54 @@ def adx(high, low, close, period=14):
 
 def calcular_perfil_volumen(df, bins=50):
     """
-    Calcula el Perfil de Volumen (Volume Profile) vertical/horizontal 
-    agrupando el volumen por niveles de precio.
+    Calcula el Perfil de Volumen (Volume Profile) agrupando el volumen por niveles de precio
+    de forma precisa mediante intersección de rangos (Low-High).
     """
-    highs = df['High']
-    lows = df['Low']
-    vols = df['Volume']
+    highs = df['High'].values
+    lows = df['Low'].values
+    vols = df['Volume'].values
     
     min_price = lows.min()
     max_price = highs.max()
     
+    if min_price == max_price:
+        return np.array([min_price]), np.array([vols.sum()]), min_price
+
     # Creamos los 'bins' o franjas de precio
     price_bins = np.linspace(min_price, max_price, bins)
     bin_volumes = np.zeros(bins - 1)
     
+    bin_lows = price_bins[:-1]
+    bin_highs = price_bins[1:]
+    bin_centers = (bin_lows + bin_highs) / 2
+    
     # Distribuimos el volumen de cada vela en las franjas que tocó
     for h, l, v in zip(highs, lows, vols):
-        if h == l:
+        if pd.isna(v) or v <= 0:
             continue
-        # En qué franjas cae esta vela
-        mask = (price_bins[:-1] >= l) & (price_bins[1:] <= h) | \
-               (price_bins[:-1] <= h) & (price_bins[1:] >= l)
-        
-        if mask.sum() > 0:
-            # Distribuimos el volumen equitativamente entre los niveles tocados
-            vol_per_bin = v / mask.sum()
-            bin_volumes[mask] += vol_per_bin
+        if h == l:
+            # Si es una vela sin rango, la asignamos al bin más cercano
+            idx = np.abs(bin_centers - l).argmin()
+            bin_volumes[idx] += v
+            continue
             
-    # Precios medios de cada bin para graficar
-    bin_centers = (price_bins[:-1] + price_bins[1:]) / 2
-    
-    # Identificamos el POC (Point of Control: el precio con más volumen)
+        # Intersección correcta entre el rango [l, h] y cada bin [bin_lows[i], bin_highs[i]]
+        # Condición de solapamiento: max(l, bin_low) <= min(h, bin_high)
+        overlap_low = np.maximum(l, bin_lows)
+        overlap_high = np.minimum(h, bin_highs)
+        overlap_len = np.maximum(0.0, overlap_high - overlap_low)
+        
+        total_len = h - l
+        if total_len > 0 and overlap_len.sum() > 0:
+            # Distribuimos proporcionalmente al solapamiento
+            weights = overlap_len / overlap_len.sum()
+            bin_volumes += v * weights
+        else:
+            # Fallback al bin central si no hubo match exacto
+            idx = np.abs(bin_centers - ((h + l) / 2)).argmin()
+            bin_volumes[idx] += v
+            
+    # Identificamos el POC (Point of Control: el precio con más volumen acumulado)
     poc_idx = np.argmax(bin_volumes)
     poc_price = bin_centers[poc_idx]
     
