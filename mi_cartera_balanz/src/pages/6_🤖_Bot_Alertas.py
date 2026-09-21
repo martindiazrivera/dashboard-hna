@@ -4,12 +4,29 @@ import pandas as pd
 import yfinance as yf
 import requests
 import os
+import subprocess
+
+st.set_page_config(page_title="Bot de Alertas", page_icon="🤖", layout="wide")
+
+# --- FUNCIÓN DE GIT PARA SINCRONIZAR CON LA NUBE ---
+def sincronizar_con_github(mensaje_commit="Actualización automática desde Streamlit"):
+    """Fuerza un git add, commit y push desde Streamlit hacia GitHub"""
+    try:
+        subprocess.run(["git", "config", "--global", "user.name", "Streamlit Bot"], check=True)
+        subprocess.run(["git", "config", "--global", "user.email", "bot@streamlit.com"], check=True)
+        subprocess.run(["git", "add", "data/alertas_trading.csv", "data/watchlist.csv"], check=True)
+        status = subprocess.run(["git", "diff", "--staged", "--quiet"])
+        if status.returncode != 0: # Hay cambios para guardar
+            subprocess.run(["git", "commit", "-m", mensaje_commit], check=True)
+            subprocess.run(["git", "push"], check=True)
+            return True
+    except Exception as e:
+        print(f"Error sincronizando con Git: {e}")
+    return False
 
 # Importamos tu motor cuantitativo
 from utils.datos_mercado import obtener_ohlcv
 from utils.indicadores import (bollinger_bands, connors_rsi, calcular_emas, awesome_oscillator, adx, calcular_perfil_volumen)
-
-st.set_page_config(page_title="Bot de Alertas", page_icon="🤖", layout="wide")
 
 # --- ESTILOS CSS ---
 st.markdown("""
@@ -83,10 +100,10 @@ with tab_config:
         telegram_chatid = st.text_input("Chat ID (Tu usuario)", type="password")
         
     st.markdown("### Configuración de WhatsApp (CallMeBot)")
-    st.info("Actualmente configurado con el número +34623789580 y API Key 3891226.")
+    st.info("Actualmente configurado con el número +5493855242407 y API Key 3891226.")
 
 # ==========================================
-# PESTAÑA 1: TRAMPAS MANUALES (TU CÓDIGO ORIGINAL)
+# PESTAÑA 1: TRAMPAS MANUALES
 # ==========================================
 with tab_manual:
     ruta_alertas = os.path.join(os.path.dirname(__file__), "../../data/alertas_trading.csv")
@@ -138,9 +155,14 @@ with tab_manual:
                 'Estado': 'ACTIVA'
             }])
             df_alertas = pd.concat([df_alertas, nueva_alerta], ignore_index=True)
+            
+            # Guardamos y sincronizamos con GitHub automáticamente
+            os.makedirs(os.path.dirname(ruta_alertas), exist_ok=True)
             df_alertas.to_csv(ruta_alertas, index=False)
+            sincronizar_con_github("Nueva trampa de precio agregada desde Streamlit")
+            
             st.cache_data.clear()
-            st.success(f"Alerta guardada para {ticker_input} a $ {precio_input:,.2f} ARS")
+            st.success(f"Alerta guardada y sincronizada para {ticker_input} a $ {precio_input:,.2f} ARS")
             st.rerun()
 
     st.markdown("---")
@@ -202,11 +224,13 @@ with tab_manual:
                         if st.button("💾 Guardar", key=f"guardar_{index}", use_container_width=True):
                             df_alertas.at[index, 'Precio_Objetivo'] = nuevo_precio
                             df_alertas.to_csv(ruta_alertas, index=False)
+                            sincronizar_con_github("Precio de trampa modificado")
                             st.cache_data.clear()
                             st.rerun()
                         if st.button("🗑️ Eliminar", key=f"eliminar_{index}", use_container_width=True):
                             df_alertas = df_alertas.drop(index)
                             df_alertas.to_csv(ruta_alertas, index=False)
+                            sincronizar_con_github("Alerta eliminada")
                             st.cache_data.clear()
                             st.rerun()
                             
@@ -215,6 +239,7 @@ with tab_manual:
             st.markdown("---")
             if st.button("🗑️ Borrar absolutamente todas las alertas"):
                 if os.path.exists(ruta_alertas): os.remove(ruta_alertas)
+                sincronizar_con_github("Todas las alertas borradas")
                 st.rerun()
         else:
             st.info("Todas tus alertas ya fueron cumplidas.")
@@ -240,7 +265,6 @@ with tab_manual:
                             
                         if disparo:
                             icono = "🟢" if row['Tipo_Alerta'] == 'COMPRA' else "🔴"
-                            # Corrección de formato para API CallMeBot
                             msj = f"{icono} *ALERTA MANUAL: {tk}*\nEl precio ha cruzado tu trampa.\nCotizacion en BYMA: $ {precio_vivo:,.2f} ARS\nEstrategia: {row['Tipo_Alerta']}."
                             
                             exito, detalle = enviar_whatsapp(msj)
@@ -254,6 +278,7 @@ with tab_manual:
                 
                 if alertas_disparadas > 0:
                     df_alertas.to_csv(ruta_alertas, index=False)
+                    sincronizar_con_github("Estados de alerta actualizados a CUMPLIDA")
                     st.cache_data.clear()
                 elif alertas_disparadas == 0 and not df_alertas[df_alertas['Estado'] == 'ACTIVA'].empty:
                     pass
@@ -261,12 +286,11 @@ with tab_manual:
                     st.info("Ninguna acción cruzó tus precios objetivo para enviar alerta.")
 
 # ==========================================
-# PESTAÑA 2: ESCÁNER QUANT (NUEVO MOTOR)
+# PESTAÑA 2: ESCÁNER QUANT
 # ==========================================
 with tab_quant:
     st.markdown("### Escáner Multiactivo y Reporte Institucional")
 
-    # Ruta para guardar la Watchlist seleccionada
     ruta_watchlist = os.path.join(os.path.dirname(__file__), "../../data/watchlist.csv")
 
     def cargar_watchlist():
@@ -274,25 +298,24 @@ with tab_quant:
             df_w = pd.read_csv(ruta_watchlist)
             return df_w['Ticker'].tolist()
         else:
-            return ["YPFD.BA", "GGAL.BA", "PAMP.BA"] # Default inicial
+            return ["YPFD.BA", "GGAL.BA", "PAMP.BA"]
 
     watchlist_actual = cargar_watchlist()
 
     st.info("📌 **Activos en Cartera y Watchlist:** Estos activos se guardan en la nube para que el motor los escanee automáticamente.")
     
-    # Multiselect conectado a tu preferencia
     tickers_seleccionados = st.multiselect(
         "Selecciona los activos para el escáner:", 
         options=list(set(watchlist_actual + ["AAPL.BA", "MELI.BA", "SPY", "QQQ", "AMD.BA", "NVDA.BA", "GOOGL.BA"])),
         default=watchlist_actual
     )
 
-    # Botón para guardar la selección para la nube
     if st.button("💾 Guardar Watchlist para el Bot en la Nube", use_container_width=True):
         df_nuevo = pd.DataFrame({'Ticker': tickers_seleccionados})
         os.makedirs(os.path.dirname(ruta_watchlist), exist_ok=True)
         df_nuevo.to_csv(ruta_watchlist, index=False)
-        st.success("¡Watchlist actualizada y guardada! El motor en la nube la leerá en su próxima ejecución.")
+        sincronizar_con_github("Watchlist de activos actualizada")
+        st.success("¡Watchlist actualizada y sincronizada con GitHub! El motor en la nube la leerá automáticamente.")
 
     st.divider()
 
