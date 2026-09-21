@@ -120,28 +120,62 @@ if analizar_btn or ticker_input:
 
             st.divider()
             
-            # --- Gráfico Interactivo (Plotly) ---
+            # --- 4. Gráfico Interactivo de Alta Fidelidad (Plotly con 4 Paneles) ---
             st.markdown("### Gráfico Cuantitativo (Estilo TradingView)")
+            
             df_plot = df.tail(120).copy() 
             
-            fig = make_subplots(rows=3, cols=1, shared_xaxes=True, vertical_spacing=0.03, row_heights=[0.6, 0.2, 0.2])
+            # Creamos 4 subplots: 1. Precio/BB/EMAs | 2. Volumen | 3. ADX | 4. CRSI
+            fig = make_subplots(
+                rows=4, cols=1, 
+                shared_xaxes=True, 
+                vertical_spacing=0.03, 
+                row_heights=[0.55, 0.15, 0.15, 0.15]
+            )
 
-            fig.add_trace(go.Candlestick(x=df_plot.index, open=df_plot['Open'], high=df_plot['High'], low=df_plot['Low'], close=df_plot['Close'], name="Precio"), row=1, col=1)
+            # --- FILA 1: Precio + Bollinger + EMAs ---
+            fig.add_trace(go.Candlestick(
+                x=df_plot.index, open=df_plot['Open'], high=df_plot['High'],
+                low=df_plot['Low'], close=df_plot['Close'], name="Precio"
+            ), row=1, col=1)
+
             fig.add_trace(go.Scatter(x=df_plot.index, y=bb_up.tail(120), line=dict(color='rgba(173, 204, 255, 0.5)', width=1), name='BB Sup'), row=1, col=1)
             fig.add_trace(go.Scatter(x=df_plot.index, y=bb_low.tail(120), line=dict(color='rgba(173, 204, 255, 0.5)', width=1), fill='tonexty', fillcolor='rgba(173, 204, 255, 0.1)', name='BB Inf'), row=1, col=1)
             fig.add_trace(go.Scatter(x=df_plot.index, y=bb_mid.tail(120), line=dict(color='orange', width=1.5, dash='dash'), name='BB Media'), row=1, col=1)
             fig.add_trace(go.Scatter(x=df_plot.index, y=emas['EMA_9'].tail(120), line=dict(color='blue', width=1.5), name='EMA 9'), row=1, col=1)
             fig.add_trace(go.Scatter(x=df_plot.index, y=emas['EMA_55'].tail(120), line=dict(color='red', width=2), name='EMA 55'), row=1, col=1)
 
-            ao_tail = ao.tail(120)
-            colors_ao = ['green' if val > 0 else 'red' for val in ao_tail]
-            fig.add_trace(go.Bar(x=df_plot.index, y=ao_tail, marker_color=colors_ao, name='AO'), row=2, col=1)
-            fig.add_trace(go.Scatter(x=df_plot.index, y=adx_series.tail(120), line=dict(color='yellow', width=2), name='ADX'), row=2, col=1)
-            fig.add_hline(y=20, line_dash="dot", line_color="gray", opacity=0.5, row=2, col=1)
+            # --- FILA 2: Volumen ---
+            vol_tail = df_plot['Volume']
+            # Colores dinámicos para el volumen según si la vela fue verde o roja
+            vol_colors = ['rgba(38, 166, 154, 0.6)' if row['Close'] >= row['Open'] else 'rgba(239, 83, 80, 0.6)' for index, row in df_plot.iterrows()]
+            
+            fig.add_trace(go.Bar(
+                x=df_plot.index, y=vol_tail, marker_color=vol_colors, name='Volumen'
+            ), row=2, col=1)
 
-            fig.add_trace(go.Scatter(x=df_plot.index, y=crsi.tail(120), line=dict(color='purple', width=2), name='CRSI'), row=3, col=1)
-            fig.add_hline(y=80, line_dash="dot", line_color="red", row=3, col=1)
-            fig.add_hline(y=20, line_dash="dot", line_color="green", row=3, col=1)
+            # --- FILA 3: ADX (Fuerza de Tendencia) ---
+            fig.add_trace(go.Scatter(
+                x=df_plot.index, y=adx_series.tail(120), line=dict(color='yellow', width=2), name='ADX (14)'
+            ), row=3, col=1)
+            fig.add_hline(y=20, line_dash="dot", line_color="gray", opacity=0.5, row=3, col=1)
+            fig.add_hline(y=25, line_dash="dash", line_color="orange", opacity=0.5, row=3, col=1)
 
-            fig.update_layout(xaxis_rangeslider_visible=False, height=850, margin=dict(l=0, r=0, t=30, b=0), template="plotly_dark", hovermode="x unified")
+            # --- FILA 4: Connors RSI (CRSI) ---
+            fig.add_trace(go.Scatter(
+                x=df_plot.index, y=crsi.tail(120), line=dict(color='purple', width=2), name='CRSI'
+            ), row=4, col=1)
+            fig.add_hline(y=80, line_dash="dot", line_color="red", row=4, col=1)
+            fig.add_hline(y=20, line_dash="dot", line_color="green", row=4, col=1)
+            fig.add_hline(y=50, line_dash="solid", line_color="gray", opacity=0.3, row=4, col=1)
+
+            # --- Configuración Global del Gráfico ---
+            fig.update_layout(
+                xaxis_rangeslider_visible=False,
+                height=950, # Aumentamos altura para que respiren los 4 paneles
+                margin=dict(l=0, r=0, t=30, b=0),
+                template="plotly_dark",
+                hovermode="x unified"
+            )
+            
             st.plotly_chart(fig, use_container_width=True)
