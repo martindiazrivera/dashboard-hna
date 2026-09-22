@@ -3,6 +3,7 @@ import pandas as pd
 import numpy as np
 import os
 import requests
+import plotly.graph_objects as go
 
 st.set_page_config(page_title="Benchmark | Balanz", page_icon="🏆", layout="wide")
 
@@ -163,14 +164,36 @@ try:
             
         st.markdown("<br>", unsafe_allow_html=True)
         
-        # GRÁFICO COMPARATIVO
+        # --- GRÁFICO COMPARATIVO PROFESIONAL (PLOTLY) ---
         st.markdown("### 📊 Gráfico de Rendimiento Comparativo")
-        df_chart = pd.DataFrame({
-            "Estrategia": ["Colchón Dólar MEP", "Plazo Fijo UVA (Inflación)", "Tu Cartera (Gestión Activa)"],
-            "Valuación Final (ARS)": [valuacion_mep, valuacion_uva, valuacion_actual_cartera]
-        }).set_index("Estrategia")
         
-        st.bar_chart(df_chart, height=400)
+        # Lógica de colores semánticos: Verde al ganador, Gris al perdedor, Azul a tu cartera (salvo que gane, ahí es verde)
+        color_mep = '#10b981' if ganador == 'Colchón Dólar MEP' else '#374151'
+        color_cartera = '#10b981' if ganador == 'Tu Cartera Balanz' else '#3b82f6'
+        color_uva = '#10b981' if ganador == 'Plazo Fijo UVA (Inflación)' else '#374151'
+
+        fig = go.Figure(data=[
+            go.Bar(
+                x=["Colchón Dólar MEP", "Tu Cartera Actual", "Plazo Fijo UVA"],
+                y=[valuacion_mep, valuacion_actual_cartera, valuacion_uva],
+                marker_color=[color_mep, color_cartera, color_uva],
+                text=[formato_arg(valuacion_mep), formato_arg(valuacion_actual_cartera), formato_arg(valuacion_uva)],
+                textposition='auto',
+                textfont=dict(color='white', size=14, weight='bold')
+            )
+        ])
+
+        fig.update_layout(
+            template='plotly_dark',
+            paper_bgcolor='rgba(0,0,0,0)',
+            plot_bgcolor='rgba(0,0,0,0)',
+            margin=dict(l=0, r=0, t=20, b=0),
+            height=400,
+            xaxis=dict(showgrid=False, tickfont=dict(size=14)),
+            yaxis=dict(showgrid=True, gridcolor='#374151', tickformat="$,.0f", visible=False) # Ocultamos el eje Y porque ya están los números en las barras
+        )
+
+        st.plotly_chart(fig, use_container_width=True)
         
         st.info(f"💡 **Veredicto del Motor:** El ganador histórico de tu capital es **{ganador}**. Tu capital inicial puro aportado fue de {formato_arg(capital_neto_nominal)}.")
 

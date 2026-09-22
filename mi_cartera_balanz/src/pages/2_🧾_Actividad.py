@@ -94,14 +94,24 @@ try:
 
     # Renderizado final
     if '📅 Fecha' in df_final.columns:
-        # CORRECCIÓN: Formato YYYY-MM-DD para mantener el ordenamiento nativo en la tabla
+        # Formato YYYY-MM-DD para mantener el ordenamiento nativo en la tabla
         df_final['📅 Fecha'] = df_final['📅 Fecha'].dt.strftime('%Y-%m-%d')
 
     cols_moneda = [c for c in ['Precio', '💰 Monto Bruto', '🏛️ Impuestos', '🤝 Comisión', '✅ Monto Final'] if c in df_final.columns]
     format_dict = {col: formato_arg for col in cols_moneda}
     
+    # Función para pintar filas según el Tipo
+    def color_operacion(row):
+        tipo = str(row.get('Tipo', '')).upper()
+        # Verde súper sutil para Compras (suma de activos)
+        if tipo == 'COMPRA': return ['background-color: rgba(16, 185, 129, 0.08)'] * len(row)
+        # Rojo súper sutil para Ventas (salida de activos)
+        elif tipo == 'VENTA': return ['background-color: rgba(239, 68, 68, 0.08)'] * len(row)
+        return [''] * len(row)
+
+    # Renderizar aplicando estilo de color y formatos de moneda simultáneamente
     st.dataframe(
-        df_final.style.format(format_dict),
+        df_final.style.apply(color_operacion, axis=1).format(format_dict),
         use_container_width=True,
         hide_index=True,
         height=600

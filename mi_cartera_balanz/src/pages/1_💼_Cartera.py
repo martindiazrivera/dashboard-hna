@@ -51,15 +51,23 @@ try:
     df_ventas = pd.read_excel(ruta, sheet_name="Operaciones_Cerradas_FIFO")
     df_macro = pd.read_excel(ruta, sheet_name="Macro_Benchmark").set_index('Metrica')
     
-    total_cartera = df['Tenencia Total Valuada'].sum()
-    ganancia_total = df['Ganancia/Perdida NO Realizada ($)'].sum()
-    inversion_original = df['Total Invertido ARS'].sum()
+    # Separación de liquidez e inversiones
+    df_liquidez = df[df['Ticker'] == 'PESOS LÍQUIDOS']
+    df_inversiones = df[df['Ticker'] != 'PESOS LÍQUIDOS']
+    
+    liquidez_total = df_liquidez['Cantidad en Tenencia'].sum() if not df_liquidez.empty else 0
+    capital_invertido = df_inversiones['Tenencia Total Valuada'].sum() if not df_inversiones.empty else 0
+    total_cartera = capital_invertido + liquidez_total
+    
+    ganancia_total = df_inversiones['Ganancia/Perdida NO Realizada ($)'].sum() if not df_inversiones.empty else 0
+    inversion_original = df_inversiones['Total Invertido ARS'].sum() if not df_inversiones.empty else 0
     porc_ganancia = (ganancia_total / inversion_original) * 100 if inversion_original > 0 else 0
     
     clase_badge = "balanz-sub" if ganancia_total >= 0 else "balanz-sub-rojo"
     signo = "+" if ganancia_total > 0 else ""
 
-    c1, c2 = st.columns([1, 1])
+    # Usamos 3 columnas para el nuevo diseño del panel principal
+    c1, c2, c3 = st.columns(3)
     
     with c1:
         st.markdown(f"""
@@ -67,7 +75,7 @@ try:
             <div class="balanz-title">👁️ Total Cartera (Valuación ARS)</div>
             <div class="balanz-total">{formato_arg(total_cartera)}</div>
             <div class="{clase_badge}">{signo}{formato_arg(ganancia_total)} ({signo}{porc_ganancia:.2f}%)</div>
-            <div class="tc-text">Valuación calculada en vivo por el Motor Cuantitativo.</div>
+            <div class="tc-text">Suma del capital de riesgo y la liquidez libre en vivo.</div>
         </div>
         """, unsafe_allow_html=True)
         
@@ -81,14 +89,23 @@ try:
         </div>
         """, unsafe_allow_html=True)
 
+    with c3:
+        st.markdown(f"""
+        <div class="balanz-card">
+            <div class="balanz-title">💵 Poder de Fuego (Liquidez)</div>
+            <div class="balanz-total">{formato_arg(liquidez_total)}</div>
+            <div class="tc-text">Pesos libres listos para ser operados o retirados.</div>
+        </div>
+        """, unsafe_allow_html=True)
+
     st.markdown("<br><br>", unsafe_allow_html=True)
     st.markdown("<h3 style='color:#111827;'>📈 Mis instrumentos (Análisis por Lotes FIFO)</h3>", unsafe_allow_html=True)
     st.markdown("Despliega cada instrumento para analizar posiciones abiertas e historial de ventas.")
     
-    if df.empty:
-        st.info("No tienes posiciones abiertas en este momento.")
+    if df_inversiones.empty:
+        st.info("No tienes posiciones de riesgo (Acciones/Cedears) abiertas en este momento.")
     else:
-        for index, row in df.iterrows():
+        for index, row in df_inversiones.iterrows():
             ticker = row['Ticker']
             cant = row['Cantidad en Tenencia']
             precio_act = row['Valor Mercado Actual']

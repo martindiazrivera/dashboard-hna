@@ -14,11 +14,18 @@ st.markdown("""
             background-color: #ffffff; border: 1px solid #e5e7eb; border-radius: 12px;
             padding: 20px; box-shadow: 0 2px 4px rgba(0,0,0,0.02); height: 100%;
         }
-        .metric-title { color: #6b7280; font-size: 13px; font-weight: 600; text-transform: uppercase; margin-bottom: 8px;}
+        .metric-title { color: #6b7280; font-size: 13px; font-weight: 600; text-transform: uppercase; margin-bottom: 8px; display: flex; align-items: center; justify-content: space-between;}
         .metric-value { font-size: 28px; font-weight: 700; color: #111827; }
-        .metric-sub { font-size: 14px; font-weight: 500; margin-top: 4px; }
+        .metric-sub { font-size: 14px; font-weight: 500; margin-top: 4px; color: #9ca3af; }
         .green { color: #10b981; }
         .red { color: #ef4444; }
+        .orange { color: #f59e0b; }
+        
+        /* Semáforos / Badges */
+        .badge-green { background-color: #d1fae5; color: #047857; padding: 2px 8px; border-radius: 12px; font-size: 11px; font-weight: 700; text-transform: none;}
+        .badge-red { background-color: #fee2e2; color: #b91c1c; padding: 2px 8px; border-radius: 12px; font-size: 11px; font-weight: 700; text-transform: none;}
+        .badge-orange { background-color: #fef3c7; color: #b45309; padding: 2px 8px; border-radius: 12px; font-size: 11px; font-weight: 700; text-transform: none;}
+
         .section-title { font-size: 20px; font-weight: 600; color: #1f2937; margin-top: 30px; margin-bottom: 15px; border-bottom: 2px solid #f3f4f6; padding-bottom: 8px;}
     </style>
 """, unsafe_allow_html=True)
@@ -72,12 +79,20 @@ try:
     else:
         trades, win_rate, avg_win, avg_loss = 0, 0, 0, 0
         
-    c1.markdown(f'<div class="metric-box"><div class="metric-title">Win Rate (Tasa de Éxito)</div><div class="metric-value {"green" if win_rate >= 50 else "red"}">{formato_pct(win_rate)}</div><div class="metric-sub">Basado en {trades} trades cerrados</div></div>', unsafe_allow_html=True)
-    c2.markdown(f'<div class="metric-box"><div class="metric-title">Promedio Ganancia (Win)</div><div class="metric-value green">{formato_arg(avg_win)}</div></div>', unsafe_allow_html=True)
-    c3.markdown(f'<div class="metric-box"><div class="metric-title">Promedio Pérdida (Loss)</div><div class="metric-value red">-{formato_arg(avg_loss)}</div></div>', unsafe_allow_html=True)
+    # Semáforo Win Rate
+    wr_badge = '<span class="badge-green">✅ Saludable</span>' if win_rate >= 50 else '<span class="badge-red">⚠️ Revisar</span>'
+    wr_color = "green" if win_rate >= 50 else "red"
     
+    c1.markdown(f'<div class="metric-box"><div class="metric-title"><span>Win Rate (Tasa de Éxito)</span> {wr_badge}</div><div class="metric-value {wr_color}">{formato_pct(win_rate)}</div><div class="metric-sub">Basado en {trades} trades cerrados</div></div>', unsafe_allow_html=True)
+    c2.markdown(f'<div class="metric-box"><div class="metric-title">Promedio Ganancia (Win)</div><div class="metric-value green">{formato_arg(avg_win)}</div><div class="metric-sub">Ingreso promedio por operación exitosa</div></div>', unsafe_allow_html=True)
+    c3.markdown(f'<div class="metric-box"><div class="metric-title">Promedio Pérdida (Loss)</div><div class="metric-value red">-{formato_arg(avg_loss)}</div><div class="metric-sub">Pérdida promedio al cortar posiciones</div></div>', unsafe_allow_html=True)
+    
+    # Semáforo Ratio Riesgo / Recompensa
     rr_ratio = (avg_win / avg_loss) if avg_loss != 0 else 0
-    c4.markdown(f'<div class="metric-box"><div class="metric-title">Ratio Riesgo/Recompensa</div><div class="metric-value">1 : {rr_ratio:.2f}</div><div class="metric-sub">Lo que ganas por cada $1 que arriesgas</div></div>', unsafe_allow_html=True)
+    rr_badge = '<span class="badge-green">✅ Positivo</span>' if rr_ratio >= 1 else '<span class="badge-orange">⚠️ Asimétrico</span>'
+    rr_color = "green" if rr_ratio >= 1 else "orange"
+    
+    c4.markdown(f'<div class="metric-box"><div class="metric-title"><span>Ratio Riesgo/Recompensa</span> {rr_badge}</div><div class="metric-value {rr_color}">1 : {rr_ratio:.2f}</div><div class="metric-sub">Lo que ganas por cada $1 que arriesgas</div></div>', unsafe_allow_html=True)
 
     # --- SECCIÓN 2: COSTOS INVISIBLES ---
     st.markdown('<div class="section-title">💸 La Sangría Invisible (Costos de Intermediación)</div>', unsafe_allow_html=True)
@@ -112,7 +127,7 @@ try:
         
     c8.markdown(f'<div class="metric-box"><div class="metric-title">Órdenes Emitidas Totales</div><div class="metric-value">{tot_ord}</div><div class="metric-sub">Intenciones de mercado</div></div>', unsafe_allow_html=True)
     c9.markdown(f'<div class="metric-box"><div class="metric-title">Ejecución Perfecta</div><div class="metric-value green">{formato_pct(cumplidas)}</div><div class="metric-sub">Llegaron al mercado con éxito</div></div>', unsafe_allow_html=True)
-    c10.markdown(f'<div class="metric-box"><div class="metric-title">Índice de Duda / Rechazo</div><div class="metric-value" style="color: #f59e0b;">{formato_pct(canceladas)}</div><div class="metric-sub">Órdenes canceladas por ti o el mercado</div></div>', unsafe_allow_html=True)
+    c10.markdown(f'<div class="metric-box"><div class="metric-title">Índice de Duda / Rechazo</div><div class="metric-value orange">{formato_pct(canceladas)}</div><div class="metric-sub">Órdenes canceladas por ti o el mercado</div></div>', unsafe_allow_html=True)
 
     # --- SECCIÓN 4: CASHFLOW Y RENTAS ---
     st.markdown('<div class="section-title">🏦 Flujo de Caja Histórico (Homologado por API MEP)</div>', unsafe_allow_html=True)
