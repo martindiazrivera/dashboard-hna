@@ -18,7 +18,7 @@ st.markdown("""
             box-shadow: 0 1px 3px rgba(0,0,0,0.02);
         }
         .metric-label { color: #6b7280; font-size: 13px; font-weight: 600; text-transform: uppercase; margin-bottom: 4px; }
-        .metric-value { font-size: 24px; font-weight: 700; color: #111827; }
+        .metric-value { font-size: 24px; font-weight: 700; color: #F3F4F6; }
     </style>
 """, unsafe_allow_html=True)
 
@@ -80,7 +80,7 @@ try:
         """, unsafe_allow_html=True)
 
     st.markdown("<br>", unsafe_allow_html=True)
-    st.markdown(f"<h3 style='color:#111827; font-size: 18px;'>Registro Histórico de Ventas - Rendimiento Post-Comisiones ({len(df_fifo)} operaciones)</h3>", unsafe_allow_html=True)
+    st.markdown(f"<h3 style='color:#F3F4F6; font-size: 18px;'>Registro Histórico de Ventas - Rendimiento Post-Comisiones ({len(df_fifo)} operaciones)</h3>", unsafe_allow_html=True)
 
     if not df_fifo.empty:
         df_fifo = df_fifo.sort_values(by='Fecha Venta', ascending=False)

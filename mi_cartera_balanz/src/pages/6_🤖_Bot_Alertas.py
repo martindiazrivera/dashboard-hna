@@ -54,12 +54,12 @@ st.markdown("""
         .alert-right { display: flex; flex-direction: column; text-align: right; }
         .alert-title { font-weight: 700; color: #1f2937; font-size: 16px; margin-bottom: 4px;}
         .alert-target { font-size: 14px; color: #6b7280; }
-        .alert-live { font-size: 22px; font-weight: 700; color: #111827; }
+        .alert-live { font-size: 22px; font-weight: 700; color: #F3F4F6; }
         .alert-dist { font-size: 13px; font-weight: 700; padding: 4px 8px; border-radius: 4px; display: inline-block; margin-top: 4px;}
         .dist-far { background-color: #f3f4f6; color: #6b7280; }
         .dist-warm { background-color: #fef3c7; color: #d97706; }
         .dist-hot { background-color: #fee2e2; color: #ef4444; }
-        .dist-triggered { background-color: #111827; color: #10b981; animation: pulse 2s infinite;}
+        .dist-triggered { background-color: #F3F4F6; color: #10b981; animation: pulse 2s infinite;}
         
         @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.6; } 100% { opacity: 1; } }
     </style>

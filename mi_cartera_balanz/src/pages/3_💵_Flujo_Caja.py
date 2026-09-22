@@ -19,7 +19,7 @@ st.markdown("""
             padding: 20px; height: 100%; box-shadow: 0 4px 6px rgba(16, 185, 129, 0.05);
         }
         .balanz-title { color: #4b5563; font-size: 14px; font-weight: 600; margin-bottom: 8px; display: flex; align-items: center; gap: 8px;}
-        .balanz-total { font-size: 26px; font-weight: 700; color: #111827; margin-bottom: 2px;}
+        .balanz-total { font-size: 26px; font-weight: 700; color: #F3F4F6; margin-bottom: 2px;}
         .tc-text { color: #9ca3af; font-size: 11px; margin-top: 8px; }
     </style>
 """, unsafe_allow_html=True)
@@ -73,7 +73,7 @@ try:
     ganancia_total_global = valuacion_actual_cartera - balance_neto_cons
 
     # --- BLOQUE 1: RESUMEN DE LA IDENTIDAD PATRIMONIAL ---
-    st.markdown("<h3 style='color:#111827;'>📊 Resumen Ejecutivo Patrimonial</h3>", unsafe_allow_html=True)
+    st.markdown("<h3 style='color:#F3F4F6;'>📊 Resumen Ejecutivo Patrimonial</h3>", unsafe_allow_html=True)
     
     r1, r2, r3, r4 = st.columns(4)
     
@@ -116,7 +116,7 @@ try:
     st.markdown("<br><br>", unsafe_allow_html=True)
 
     # --- BLOQUE 2: DETALLE DE TESORERÍA (Fondeos y Retiros Nativo) ---
-    st.markdown("<h3 style='color:#111827;'>📥 Desglose Nativo de Tesorería</h3>", unsafe_allow_html=True)
+    st.markdown("<h3 style='color:#F3F4F6;'>📥 Desglose Nativo de Tesorería</h3>", unsafe_allow_html=True)
     c1, c2 = st.columns(2)
     
     with c1:
@@ -140,7 +140,7 @@ try:
         """, unsafe_allow_html=True)
 
     st.markdown("<br><br>", unsafe_allow_html=True)
-    st.markdown("<h3 style='color:#111827;'>📋 Auditoría Oficial de Movimientos de Caja</h3>", unsafe_allow_html=True)
+    st.markdown("<h3 style='color:#F3F4F6;'>📋 Auditoría Oficial de Movimientos de Caja</h3>", unsafe_allow_html=True)
     
     if not df_caja.empty:
         if 'Concertacion' in df_caja.columns:

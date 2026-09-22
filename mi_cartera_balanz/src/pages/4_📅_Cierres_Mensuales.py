@@ -13,7 +13,7 @@ st.markdown("""
         
         .cierre-header { background-color: #f3f4f6; padding: 16px; border-radius: 8px; margin-bottom: 16px; border-left: 4px solid #3b82f6;}
         .metric-label { font-size: 12px; color: #6b7280; font-weight: 600; text-transform: uppercase;}
-        .metric-value { font-size: 20px; font-weight: 700; color: #111827;}
+        .metric-value { font-size: 20px; font-weight: 700; color: #F3F4F6;}
         .metric-value.green { color: #10b981; }
         .metric-value.red { color: #ef4444; }
     </style>

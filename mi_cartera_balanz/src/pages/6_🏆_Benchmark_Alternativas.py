@@ -23,7 +23,7 @@ st.markdown("""
             transform: scale(1.02);
         }
         .bench-title { color: #6b7280; font-size: 14px; font-weight: 700; text-transform: uppercase; margin-bottom: 8px;}
-        .bench-val { font-size: 32px; font-weight: 800; color: #111827; margin-bottom: 8px;}
+        .bench-val { font-size: 32px; font-weight: 800; color: #F3F4F6; margin-bottom: 8px;}
         .bench-vs { font-size: 14px; font-weight: 600; padding: 4px 8px; border-radius: 4px; display: inline-block;}
         .green-badge { background-color: #d1fae5; color: #047857; }
         .red-badge { background-color: #fee2e2; color: #b91c1c; }
