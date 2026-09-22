@@ -10,15 +10,17 @@ st.markdown("""
         footer {visibility: hidden;}
         .stDeployButton {display:none;}
         
-        .investing-metric-card {
-            background-color: #ffffff;
-            border: 1px solid #e5e7eb;
-            border-radius: 8px;
-            padding: 16px 20px;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.02);
+        .metric-box {
+            background-color: #ffffff; border: 1px solid #e5e7eb; border-radius: 8px;
+            padding: 16px; box-shadow: 0 1px 2px rgba(0,0,0,0.05); height: 100%;
         }
-        .metric-label { color: #6b7280; font-size: 13px; font-weight: 600; text-transform: uppercase; margin-bottom: 4px; }
-        .metric-value { font-size: 24px; font-weight: 700; color: #F3F4F6; }
+        .metric-title { color: #64748b; font-size: 12px; font-weight: 700; text-transform: uppercase; margin-bottom: 8px;}
+        
+        /* ACÁ ESTÁ EL ARREGLO */
+        .metric-value { font-size: 24px; font-weight: 700; color: #0f172a; }
+        
+        .green { color: #059669; }
+        .red { color: #dc2626; }
     </style>
 """, unsafe_allow_html=True)
 

@@ -26,7 +26,7 @@ st.markdown("""
         .badge-red { background-color: #fee2e2; color: #b91c1c; padding: 2px 8px; border-radius: 12px; font-size: 11px; font-weight: 700; text-transform: none;}
         .badge-orange { background-color: #fef3c7; color: #b45309; padding: 2px 8px; border-radius: 12px; font-size: 11px; font-weight: 700; text-transform: none;}
 
-        .section-title { font-size: 20px; font-weight: 600; color: #1f2937; margin-top: 30px; margin-bottom: 15px; border-bottom: 2px solid #f3f4f6; padding-bottom: 8px;}
+        .section-title { font-size: 20px; font-weight: 600; color: #ffffff; margin-top: 30px; margin-bottom: 15px; border-bottom: 2px solid #374151; padding-bottom: 8px;}
     </style>
 """, unsafe_allow_html=True)
 

@@ -11,11 +11,21 @@ st.markdown("""
         footer {visibility: hidden;}
         .stDeployButton {display:none;}
         
-        .cierre-header { background-color: #f3f4f6; padding: 16px; border-radius: 8px; margin-bottom: 16px; border-left: 4px solid #3b82f6;}
-        .metric-label { font-size: 12px; color: #6b7280; font-weight: 600; text-transform: uppercase;}
-        .metric-value { font-size: 20px; font-weight: 700; color: #F3F4F6;}
-        .metric-value.green { color: #10b981; }
-        .metric-value.red { color: #ef4444; }
+        .cierre-card {
+            background-color: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px;
+            padding: 16px; margin-bottom: 16px; display: flex; justify-content: space-between;
+            align-items: center;
+        }
+        .cierre-col { display: flex; flex-direction: column; }
+        
+        .cierre-label { font-size: 11px; font-weight: 700; color: #64748b; text-transform: uppercase; letter-spacing: 0.5px;}
+        
+        /* ACÁ ESTÁ EL ARREGLO: Gris oscuro para que se vea sobre el fondo #f8fafc */
+        .cierre-val { font-size: 18px; font-weight: 700; color: #0f172a; margin-top: 4px;}
+        
+        .val-green { color: #059669; }
+        .val-red { color: #dc2626; }
+        .streamlit-expanderHeader { font-weight: 600 !important; font-size: 15px !important; }
     </style>
 """, unsafe_allow_html=True)
 
