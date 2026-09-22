@@ -16,7 +16,7 @@ st.markdown("""
             padding: 24px; height: 100%; box-shadow: 0 2px 4px rgba(0,0,0,0.02);
         }
         .balanz-title { color: #4b5563; font-size: 16px; font-weight: 600; margin-bottom: 12px; display: flex; align-items: center; gap: 8px;}
-        .balanz-total { font-size: 32px; font-weight: 700; color: #F3F4F6; margin-bottom: 4px;}
+        .balanz-total { font-size: 32px; font-weight: 700; color: #111827; margin-bottom: 4px;}
         .balanz-sub { font-size: 14px; color: #10b981; font-weight: 600; background-color: #d1fae5; padding: 4px 8px; border-radius: 4px; display: inline-block;}
         .balanz-sub-rojo { font-size: 14px; color: #ef4444; font-weight: 600; background-color: #fee2e2; padding: 4px 8px; border-radius: 4px; display: inline-block;}
         .tc-text { color: #9ca3af; font-size: 12px; margin-top: 15px; }
