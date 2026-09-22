@@ -11,22 +11,25 @@ st.markdown("""
         footer {visibility: hidden;}
         .stDeployButton {display:none;}
         
-        /* RESTAURAMOS EL FONDO CLARO DE LAS TARJETAS DENTRO DEL EXPANDER */
         .cierre-card {
-            background-color: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px;
-            padding: 16px; margin-bottom: 16px; display: flex; justify-content: space-between;
-            align-items: center;
+            background-color: #f8fafc !important; 
+            border: 1px solid #e2e8f0 !important; 
+            border-radius: 8px !important;
+            padding: 16px !important; 
+            margin-bottom: 16px !important; 
+            display: flex !important; 
+            justify-content: space-between !important;
+            align-items: center !important;
         }
-        .cierre-col { display: flex; flex-direction: column; }
+        .cierre-col { display: flex !important; flex-direction: column !important; }
         
-        .cierre-label { font-size: 11px; font-weight: 700; color: #64748b; text-transform: uppercase; letter-spacing: 0.5px;}
+        .cierre-label { font-size: 11px !important; font-weight: 700 !important; color: #64748b !important; text-transform: uppercase !important; letter-spacing: 0.5px !important;}
         
-        /* NÚMEROS EN AZUL/GRIS OSCURO */
-        .cierre-val { font-size: 18px; font-weight: 700; color: #0f172a; margin-top: 4px;}
+        .cierre-val { font-size: 18px !important; font-weight: 700 !important; color: #0f172a !important; margin-top: 4px !important;}
         
-        .val-green { color: #059669; }
-        .val-red { color: #dc2626; }
-        .streamlit-expanderHeader { font-weight: 600 !important; font-size: 15px !important; }
+        .val-green { color: #059669 !important; }
+        .val-red { color: #dc2626 !important; }
+        .streamlit-expanderHeader { font-weight: 600 !important; font-size: 15px !important; color: #ffffff !important; }
     </style>
 """, unsafe_allow_html=True)
 

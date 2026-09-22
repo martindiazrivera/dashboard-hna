@@ -10,18 +10,21 @@ st.markdown("""
         footer {visibility: hidden;}
         .stDeployButton {display:none;}
         
-        /* RESTAURAMOS EL FONDO BLANCO */
         .metric-box {
-            background-color: #ffffff; border: 1px solid #e5e7eb; border-radius: 8px;
-            padding: 16px; box-shadow: 0 1px 2px rgba(0,0,0,0.05); height: 100%;
+            background-color: #ffffff !important; 
+            border: 1px solid #e5e7eb !important; 
+            border-radius: 8px !important;
+            padding: 16px !important; 
+            box-shadow: 0 1px 2px rgba(0,0,0,0.05) !important; 
+            height: 100% !important;
+            display: block !important;
         }
-        .metric-title { color: #64748b; font-size: 12px; font-weight: 700; text-transform: uppercase; margin-bottom: 8px;}
+        .metric-title { color: #64748b !important; font-size: 12px !important; font-weight: 700 !important; text-transform: uppercase !important; margin-bottom: 8px !important;}
         
-        /* NÚMEROS EN AZUL/GRIS OSCURO */
-        .metric-value { font-size: 24px; font-weight: 700; color: #0f172a; }
+        .metric-value { font-size: 24px !important; font-weight: 700 !important; color: #0f172a !important; display: block !important;}
         
-        .green { color: #059669; }
-        .red { color: #dc2626; }
+        .green { color: #059669 !important; }
+        .red { color: #dc2626 !important; }
     </style>
 """, unsafe_allow_html=True)
 
