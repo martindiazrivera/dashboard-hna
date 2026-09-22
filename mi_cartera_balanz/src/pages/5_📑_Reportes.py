@@ -10,13 +10,14 @@ st.markdown("""
         footer {visibility: hidden;}
         .stDeployButton {display:none;}
         
+        /* RESTAURAMOS EL FONDO BLANCO */
         .metric-box {
             background-color: #ffffff; border: 1px solid #e5e7eb; border-radius: 8px;
             padding: 16px; box-shadow: 0 1px 2px rgba(0,0,0,0.05); height: 100%;
         }
         .metric-title { color: #64748b; font-size: 12px; font-weight: 700; text-transform: uppercase; margin-bottom: 8px;}
         
-        /* ACÁ ESTÁ EL ARREGLO */
+        /* NÚMEROS EN AZUL/GRIS OSCURO */
         .metric-value { font-size: 24px; font-weight: 700; color: #0f172a; }
         
         .green { color: #059669; }

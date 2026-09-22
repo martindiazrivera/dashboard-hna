@@ -10,20 +10,21 @@ st.markdown("""
         footer {visibility: hidden;}
         .stDeployButton {display:none;}
         
+        /* RESTAURAMOS EL FONDO BLANCO DE LAS TARJETAS */
         .metric-box {
             background-color: #ffffff; border: 1px solid #e5e7eb; border-radius: 12px;
             padding: 24px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); height: 100%;
         }
         .metric-title { color: #6b7280; font-size: 14px; font-weight: 600; margin-bottom: 12px; display: flex; align-items: center; gap: 8px;}
         
-        /* ACÁ ESTÁ EL ARREGLO: Vuelve a #111827 para verse sobre fondo blanco */
+        /* NÚMEROS EN GRIS OSCURO (porque el fondo ahora es blanco) */
         .metric-value { font-size: 32px; font-weight: 700; color: #111827; margin-bottom: 4px;}
         
         .metric-sub { font-size: 12px; color: #9ca3af; margin-top: 8px; }
         .green-text { color: #10b981; }
         .red-text { color: #ef4444; }
         
-        /* ACÁ ESTÁ EL ARREGLO DE LOS TÍTULOS DE SECCIÓN: Blanco puro */
+        /* TÍTULOS DE SECCIÓN EN BLANCO */
         .section-title { font-size: 22px; font-weight: 700; color: #ffffff; margin-top: 40px; margin-bottom: 20px; border-bottom: 1px solid #374151; padding-bottom: 10px;}
     </style>
 """, unsafe_allow_html=True)

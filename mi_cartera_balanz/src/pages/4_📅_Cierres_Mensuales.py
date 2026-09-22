@@ -11,6 +11,7 @@ st.markdown("""
         footer {visibility: hidden;}
         .stDeployButton {display:none;}
         
+        /* RESTAURAMOS EL FONDO CLARO DE LAS TARJETAS DENTRO DEL EXPANDER */
         .cierre-card {
             background-color: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px;
             padding: 16px; margin-bottom: 16px; display: flex; justify-content: space-between;
@@ -20,7 +21,7 @@ st.markdown("""
         
         .cierre-label { font-size: 11px; font-weight: 700; color: #64748b; text-transform: uppercase; letter-spacing: 0.5px;}
         
-        /* ACÁ ESTÁ EL ARREGLO: Gris oscuro para que se vea sobre el fondo #f8fafc */
+        /* NÚMEROS EN AZUL/GRIS OSCURO */
         .cierre-val { font-size: 18px; font-weight: 700; color: #0f172a; margin-top: 4px;}
         
         .val-green { color: #059669; }
