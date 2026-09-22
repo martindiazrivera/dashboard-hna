@@ -81,7 +81,8 @@ class MotorCuantitativo:
             if not self.df_cta_cte.empty:
                 col_saldo = self.obtener_columna_flexible(self.df_cta_cte, ['Saldo'])
                 if col_saldo:
-                    return float(self.df_cta_cte.iloc[-1][col_saldo])
+                    # Se usa iloc[0] porque Balanz ordena de más reciente a más antiguo
+                    return float(self.df_cta_cte.iloc[0][col_saldo])
         except: pass
         return 0.0
 
@@ -200,8 +201,12 @@ class MotorCuantitativo:
         if not df_mov.empty:
             col_desc = self.obtener_columna_flexible(df_mov, ['Descripcion', 'Detalle'])
             if col_desc:
-                subs = df_mov[df_mov[col_desc].astype(str).str.contains('Suscripción', case=False, na=False)]
-                if not subs.empty:
+                descripciones = df_mov[col_desc].astype(str).str.lower()
+                # Verifica si hubo suscripción, pero también verifica que NO haya un rescate total posterior
+                tuvo_suscripcion = descripciones.str.contains('suscripción', na=False).any()
+                tuvo_rescate = descripciones.str.contains('rescate a balanz|liquidación de rescate', na=False).any()
+                
+                if tuvo_suscripcion and not tuvo_rescate:
                     inventario['BCMMA'] = [{
                         'fecha_compra': pd.to_datetime('today'),
                         'cantidad_restante': 160170.68,
@@ -233,6 +238,20 @@ class MotorCuantitativo:
                             'Comisión Unitaria': c_unit - p_puro, 'Costo Real (Entrada)': c_unit,
                             'Breakeven Salida': breakeven, 'Capital Asignado': lote['cantidad_restante'] * c_unit
                         })
+
+                        # Agregar la liquidez libre a la tenencia
+        saldo_liquido = self.procesar_cashflow()
+        if saldo_liquido > 0:
+            tenencia.append({
+                'Ticker': 'PESOS LÍQUIDOS', 
+                'Cantidad en Tenencia': saldo_liquido,
+                'Valor de Compra Promedio': 1.0,
+                'Total Invertido ARS': saldo_liquido, 
+                'Moneda Origen': 'Pesos'
+            })
+            # Fijamos el precio a 1 en el diccionario de precios vivos para que no busque ARS en Yahoo Finance
+            # (El método valuar_activos_yfinance lo interpretará automáticamente si le agregás la excepción)
+
         return pd.DataFrame(tenencia), pd.DataFrame(registro_ventas), pd.DataFrame(lotes_abiertos)
 
     def obtener_precio_historico(self, ticker):
@@ -252,9 +271,15 @@ class MotorCuantitativo:
             from tvDatafeed import TvDatafeed, Interval
             tv = TvDatafeed()
             for t in tickers_cartera:
+                # EXCEPCIONES DE PRECIO FIJO (FONDOS Y LIQUIDEZ)
                 if t == 'BCMMA': 
                     precios_vivos[t] = 12.505889 
                     continue
+                elif t == 'PESOS LÍQUIDOS':
+                    precios_vivos[t] = 1.0 
+                    continue
+                
+                # BÚSQUEDA NORMAL EN TRADINGVIEW
                 for exchange in ['BCBA', 'BYMA']:
                     try:
                         data = tv.get_hist(symbol=t, exchange=exchange, interval=Interval.in_daily, n_bars=1)
