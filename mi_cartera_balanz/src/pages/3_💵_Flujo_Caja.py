@@ -10,22 +10,21 @@ st.markdown("""
         footer {visibility: hidden;}
         .stDeployButton {display:none;}
         
-        .metric-box {
+        /* RESTAURAMOS EL FONDO BLANCO DE LAS TARJETAS */
+        .balanz-card, .balanz-card-destacada {
             background-color: #ffffff !important; 
             border: 1px solid #e5e7eb !important; 
             border-radius: 12px !important;
             padding: 24px !important; 
-            box-shadow: 0 4px 6px rgba(0,0,0,0.05) !important; 
-            height: 100% !important;
+            height: 100% !important; 
+            box-shadow: 0 2px 4px rgba(0,0,0,0.02) !important;
             display: block !important;
         }
-        .metric-title { color: #6b7280 !important; font-size: 14px !important; font-weight: 600 !important; margin-bottom: 12px !important; display: flex; align-items: center; gap: 8px;}
         
-        .metric-value { font-size: 32px !important; font-weight: 700 !important; color: #111827 !important; margin-bottom: 4px !important;}
-        
-        .metric-sub { font-size: 12px !important; color: #9ca3af !important; margin-top: 8px !important; }
-        .green-text { color: #10b981 !important; }
-        .red-text { color: #ef4444 !important; }
+        /* TÍTULOS EN GRIS, NÚMEROS EN OSCURO PARA LEERSE SOBRE BLANCO */
+        .balanz-title { color: #4b5563 !important; font-size: 16px !important; font-weight: 600 !important; margin-bottom: 12px !important; display: flex; align-items: center; gap: 8px;}
+        .balanz-total { font-size: 32px !important; font-weight: 700 !important; color: #111827 !important; margin-bottom: 4px !important;}
+        .tc-text { color: #9ca3af !important; font-size: 12px !important; margin-top: 15px !important; }
         
         .section-title { font-size: 22px !important; font-weight: 700 !important; color: #ffffff !important; margin-top: 40px !important; margin-bottom: 20px !important; border-bottom: 1px solid #374151 !important; padding-bottom: 10px !important;}
     </style>

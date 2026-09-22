@@ -10,7 +10,8 @@ st.markdown("""
         footer {visibility: hidden;}
         .stDeployButton {display:none;}
         
-        .metric-box {
+        /* RESTAURAMOS EL FONDO BLANCO */
+        .investing-metric-card {
             background-color: #ffffff !important; 
             border: 1px solid #e5e7eb !important; 
             border-radius: 8px !important;
@@ -19,8 +20,9 @@ st.markdown("""
             height: 100% !important;
             display: block !important;
         }
-        .metric-title { color: #64748b !important; font-size: 12px !important; font-weight: 700 !important; text-transform: uppercase !important; margin-bottom: 8px !important;}
         
+        /* TÍTULOS Y NÚMEROS OSCUROS PARA LEERSE SOBRE BLANCO */
+        .metric-label { color: #64748b !important; font-size: 12px !important; font-weight: 700 !important; text-transform: uppercase !important; margin-bottom: 8px !important;}
         .metric-value { font-size: 24px !important; font-weight: 700 !important; color: #0f172a !important; display: block !important;}
         
         .green { color: #059669 !important; }

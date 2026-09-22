@@ -11,24 +11,21 @@ st.markdown("""
         footer {visibility: hidden;}
         .stDeployButton {display:none;}
         
-        .cierre-card {
+        /* FONDO CLARO PARA EL HEADER DEL CIERRE */
+        .cierre-header {
             background-color: #f8fafc !important; 
             border: 1px solid #e2e8f0 !important; 
             border-radius: 8px !important;
             padding: 16px !important; 
             margin-bottom: 16px !important; 
-            display: flex !important; 
-            justify-content: space-between !important;
-            align-items: center !important;
         }
-        .cierre-col { display: flex !important; flex-direction: column !important; }
         
-        .cierre-label { font-size: 11px !important; font-weight: 700 !important; color: #64748b !important; text-transform: uppercase !important; letter-spacing: 0.5px !important;}
+        /* LETRAS CLARAS PARA LEERSE SOBRE EL FONDO */
+        .metric-label { font-size: 11px !important; font-weight: 700 !important; color: #64748b !important; text-transform: uppercase !important; letter-spacing: 0.5px !important;}
+        .metric-value { font-size: 18px !important; font-weight: 700 !important; color: #0f172a !important; margin-top: 4px !important;}
         
-        .cierre-val { font-size: 18px !important; font-weight: 700 !important; color: #0f172a !important; margin-top: 4px !important;}
-        
-        .val-green { color: #059669 !important; }
-        .val-red { color: #dc2626 !important; }
+        .green { color: #059669 !important; }
+        .red { color: #dc2626 !important; }
         .streamlit-expanderHeader { font-weight: 600 !important; font-size: 15px !important; color: #ffffff !important; }
     </style>
 """, unsafe_allow_html=True)
