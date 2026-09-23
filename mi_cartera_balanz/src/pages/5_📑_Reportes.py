@@ -10,7 +10,6 @@ st.markdown("""
         footer {visibility: hidden;}
         .stDeployButton {display:none;}
         
-        /* TARJETAS BLANCAS CON FONDO OPACO */
         .investing-metric-card {
             background-color: #ffffff !important; 
             border: 1px solid #e5e7eb !important; 
@@ -21,7 +20,6 @@ st.markdown("""
             display: block !important;
         }
         
-        /* TEXTOS Y NÚMEROS OSCUROS */
         .metric-label { color: #64748b !important; font-size: 11px !important; font-weight: 700 !important; text-transform: uppercase !important; margin-bottom: 8px !important;}
         .metric-value { font-size: 22px !important; font-weight: 700 !important; color: #0f172a !important; display: block !important;}
         
@@ -42,39 +40,28 @@ try:
     
     df_tenencia = pd.read_excel(ruta, sheet_name="Tenencia_Actual")
     df_fifo = pd.read_excel(ruta, sheet_name="Operaciones_Cerradas_FIFO")
-    df_bruto = pd.read_excel(ruta, sheet_name="Historial_Bruto")
 
-    # MÉTRICAS LIMPIAS
+    # MÉTRICAS LIMPIAS (4 tarjetas estándar)
     val_mercado_total = df_tenencia['Tenencia Total Valuada'].sum() if not df_tenencia.empty else 0
     bp_abiertas = df_tenencia['Ganancia/Perdida NO Realizada ($)'].sum() if not df_tenencia.empty else 0
     bp_cerradas_bruto = df_fifo['P&L Realizado ($)'].sum() if not df_fifo.empty else 0
     
-    # Cálculo Friccional Netos de Bolsillo
     tasa_friccion = 0.01 
     if not df_fifo.empty:
         df_fifo['Costo Trade Estimado ($)'] = (df_fifo['Precio Compra Promedio'] * df_fifo['Cantidad'] * tasa_friccion) + (df_fifo['Precio Venta Real'] * df_fifo['Cantidad'] * tasa_friccion)
         df_fifo['P&L NETO de Bolsillo ($)'] = df_fifo['P&L Realizado ($)'] - df_fifo['Costo Trade Estimado ($)']
         bp_cerradas_neto = df_fifo['P&L NETO de Bolsillo ($)'].sum()
+        
+        # --- CÁLCULO DE LA COLUMNA: TECHO DE RECOMPRA NETO ---
+        # Tasa de fricción histórica de compra (~1.2705%) para descontar aranceles al recomprar
+        tasa_friccion_compra = 0.012705
+        neto_venta_total = df_fifo['Precio Venta Real'] * df_fifo['Cantidad']
+        bruto_max_recompra = neto_venta_total / (1 + tasa_friccion_compra)
+        df_fifo['Techo de Recompra'] = bruto_max_recompra / df_fifo['Cantidad']
     else:
         bp_cerradas_neto = 0
 
-    # --- CÁLCULO DINÁMICO DEL PRECIO LÍMITE DE RECOMPRA (Último trade cerrado, ej: NVDA) ---
-    precio_limite_recompra = 0
-    if not df_fifo.empty and not df_bruto.empty:
-        # Buscamos la última venta realizada
-        ultima_venta = df_fifo.iloc[0] # Ya que suele estar ordenada o la ordenamos por fecha
-        ticker_ult = ultima_venta.get('Ticker', 'NVDA')
-        cant_ult = ultima_venta.get('Cantidad', 139)
-        
-        # Buscamos su respectiva caja/historial bruto para extraer el Neto exacto cobrado
-        # O simulamos con la matemática exacta de la última operación de NVDA
-        monto_final_venta_ult = 2089759.48 # Dinero neto en mano de la venta de NVDA
-        tasa_friccion_compra = 0.012705    # Fricción histórica de compra
-        bruto_max_recompra = monto_final_venta_ult / (1 + tasa_friccion_compra)
-        precio_limite_recompra = bruto_max_recompra / cant_ult
-
-    # Mostramos 5 columnas métricas para incluir el Techo de Recompra
-    m1, m2, m3, m4, m5 = st.columns(5)
+    m1, m2, m3, m4 = st.columns(4)
     
     with m1:
         st.markdown(f"""
@@ -104,13 +91,6 @@ try:
             <div class="metric-value" style="color:{'#10b981' if bp_cerradas_neto >= 0 else '#ef4444'};">{formato_arg(bp_cerradas_neto)}</div>
         </div>
         """, unsafe_allow_html=True)
-    with m5:
-        st.markdown(f"""
-        <div class="investing-metric-card" style="border-left: 4px solid #3b82f6;">
-            <div class="metric-label">Techo Recompra (NVDA)</div>
-            <div class="metric-value" style="color: #2563eb; font-size:20px;">{formato_arg(precio_limite_recompra)}</div>
-        </div>
-        """, unsafe_allow_html=True)
 
     st.markdown("<br>", unsafe_allow_html=True)
     st.markdown(f"<h3 style='color:#F3F4F6; font-size: 18px;'>Registro Histórico de Ventas - Rendimiento Post-Comisiones ({len(df_fifo)} operaciones)</h3>", unsafe_allow_html=True)
@@ -128,12 +108,13 @@ try:
             'Precio Venta Real': lambda x: formato_arg(x),
             'P&L Realizado ($)': lambda x: formato_arg(x),
             'Costo Trade Estimado ($)': lambda x: formato_arg(x),
-            'P&L NETO de Bolsillo ($)': lambda x: formato_arg(x)
+            'P&L NETO de Bolsillo ($)': lambda x: formato_arg(x),
+            'Techo de Recompra': lambda x: formato_arg(x)
         }
         
         cols_vista = ['Fecha Compra Origen', 'Fecha Venta', 'Ticker', 'Moneda', 'Cantidad', 
                       'Precio Compra Promedio', 'Precio Venta Real', 'P&L Realizado ($)', 
-                      'Costo Trade Estimado ($)', 'P&L NETO de Bolsillo ($)']
+                      'Costo Trade Estimado ($)', 'P&L NETO de Bolsillo ($)', 'Techo de Recompra']
         
         df_vista = df_fifo[[c for c in cols_vista if c in df_fifo.columns]]
         
