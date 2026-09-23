@@ -41,7 +41,6 @@ try:
     df_tenencia = pd.read_excel(ruta, sheet_name="Tenencia_Actual")
     df_fifo = pd.read_excel(ruta, sheet_name="Operaciones_Cerradas_FIFO")
 
-    # MÉTRICAS LIMPIAS (4 tarjetas estándar)
     val_mercado_total = df_tenencia['Tenencia Total Valuada'].sum() if not df_tenencia.empty else 0
     bp_abiertas = df_tenencia['Ganancia/Perdida NO Realizada ($)'].sum() if not df_tenencia.empty else 0
     bp_cerradas_bruto = df_fifo['P&L Realizado ($)'].sum() if not df_fifo.empty else 0
@@ -52,8 +51,7 @@ try:
         df_fifo['P&L NETO de Bolsillo ($)'] = df_fifo['P&L Realizado ($)'] - df_fifo['Costo Trade Estimado ($)']
         bp_cerradas_neto = df_fifo['P&L NETO de Bolsillo ($)'].sum()
         
-        # --- CÁLCULO DE LA COLUMNA: TECHO DE RECOMPRA NETO ---
-        # Tasa de fricción histórica de compra (~1.2705%) para descontar aranceles al recomprar
+        # Cálculo del Techo de Recompra Netos de Fricción
         tasa_friccion_compra = 0.012705
         neto_venta_total = df_fifo['Precio Venta Real'] * df_fifo['Cantidad']
         bruto_max_recompra = neto_venta_total / (1 + tasa_friccion_compra)
@@ -106,15 +104,18 @@ try:
         formatos = {
             'Precio Compra Promedio': lambda x: formato_arg(x),
             'Precio Venta Real': lambda x: formato_arg(x),
-            'P&L Realizado ($)': lambda x: formato_arg(x),
+            'Techo de Recompra': lambda x: formato_arg(x),
             'Costo Trade Estimado ($)': lambda x: formato_arg(x),
-            'P&L NETO de Bolsillo ($)': lambda x: formato_arg(x),
-            'Techo de Recompra': lambda x: formato_arg(x)
+            'P&L Realizado ($)': lambda x: formato_arg(x),
+            'P&L NETO de Bolsillo ($)': lambda x: formato_arg(x)
         }
         
-        cols_vista = ['Fecha Compra Origen', 'Fecha Venta', 'Ticker', 'Moneda', 'Cantidad', 
-                      'Precio Compra Promedio', 'Precio Venta Real', 'P&L Realizado ($)', 
-                      'Costo Trade Estimado ($)', 'P&L NETO de Bolsillo ($)', 'Techo de Recompra']
+        # ORDEN ESTRICTO DE COLUMNAS SOLICITADO
+        cols_vista = [
+            'Fecha Compra Origen', 'Fecha Venta', 'Ticker', 'Moneda', 'Cantidad', 
+            'Precio Compra Promedio', 'Precio Venta Real', 'Techo de Recompra', 
+            'Costo Trade Estimado ($)', 'P&L Realizado ($)', 'P&L NETO de Bolsillo ($)'
+        ]
         
         df_vista = df_fifo[[c for c in cols_vista if c in df_fifo.columns]]
         
