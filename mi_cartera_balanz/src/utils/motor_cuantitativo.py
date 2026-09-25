@@ -77,14 +77,27 @@ class MotorCuantitativo:
             return False
 
     def procesar_cashflow(self):
+        saldos = {'Pesos': 0.0, 'Dólares': 0.0, 'Cable': 0.0}
         try:
             if not self.df_cta_cte.empty:
+                col_moneda = self.obtener_columna_flexible(self.df_cta_cte, ['Moneda'])
                 col_saldo = self.obtener_columna_flexible(self.df_cta_cte, ['Saldo'])
-                if col_saldo:
-                    # Se usa iloc[0] porque Balanz ordena de más reciente a más antiguo
-                    return float(self.df_cta_cte.iloc[0][col_saldo])
+                
+                if col_moneda and col_saldo:
+                    # Obtenemos el saldo más reciente (fila 0) para cada moneda
+                    # Pesos
+                    df_pesos = self.df_cta_cte[self.df_cta_cte[col_moneda].astype(str).str.contains('Pesos', case=False, na=False)]
+                    if not df_pesos.empty: saldos['Pesos'] = float(df_pesos.iloc[0][col_saldo])
+                    
+                    # Dólares MEP (Generalmente dice "Dólares" a secas)
+                    df_dolares = self.df_cta_cte[self.df_cta_cte[col_moneda].astype(str).str.strip() == 'Dólares']
+                    if not df_dolares.empty: saldos['Dólares'] = float(df_dolares.iloc[0][col_saldo])
+                    
+                    # Dólar Cable / CCL (Generalmente dice "Dólares C.V. 7000" o similar)
+                    df_cable = self.df_cta_cte[self.df_cta_cte[col_moneda].astype(str).str.contains('7000|Cable|CCL', case=False, na=False)]
+                    if not df_cable.empty: saldos['Cable'] = float(df_cable.iloc[0][col_saldo])
         except: pass
-        return 0.0
+        return saldos
 
     def limpiar_y_ajustar_boletos(self):
         df = self.df_boletos.copy()
@@ -105,6 +118,7 @@ class MotorCuantitativo:
             if 'MSFT' in t or 'MICROSOFT' in t: return 'MSFT'
             if 'SPY' in t or 'S&P' in t: return 'SPY'
             if 'BONO' in t and 'AL30' in t: return 'AL30'
+            if 'PAMPA' in t or 'PAMP' in t: return 'PAMP' # <--- Agregado para Pampa
             return t
             
         col_ticker = self.obtener_columna_flexible(df, ['Ticker', 'Simbolo', 'Especie'])
@@ -239,18 +253,17 @@ class MotorCuantitativo:
                             'Breakeven Salida': breakeven, 'Capital Asignado': lote['cantidad_restante'] * c_unit
                         })
 
-                        # Agregar la liquidez libre a la tenencia
-        saldo_liquido = self.procesar_cashflow()
-        if saldo_liquido > 0:
-            tenencia.append({
-                'Ticker': 'PESOS LÍQUIDOS', 
-                'Cantidad en Tenencia': saldo_liquido,
-                'Valor de Compra Promedio': 1.0,
-                'Total Invertido ARS': saldo_liquido, 
-                'Moneda Origen': 'Pesos'
-            })
-            # Fijamos el precio a 1 en el diccionario de precios vivos para que no busque ARS en Yahoo Finance
-            # (El método valuar_activos_yfinance lo interpretará automáticamente si le agregás la excepción)
+                        # Agregar la liquidez libre a la tenencia (separada por moneda)
+        saldos_liquidos = self.procesar_cashflow()
+        
+        if saldos_liquidos['Pesos'] > 0:
+            tenencia.append({'Ticker': 'PESOS LÍQUIDOS', 'Cantidad en Tenencia': saldos_liquidos['Pesos'], 'Valor de Compra Promedio': 1.0, 'Total Invertido ARS': saldos_liquidos['Pesos'], 'Moneda Origen': 'Pesos'})
+            
+        if saldos_liquidos['Dólares'] > 0:
+            tenencia.append({'Ticker': 'DÓLARES LÍQUIDOS', 'Cantidad en Tenencia': saldos_liquidos['Dólares'], 'Valor de Compra Promedio': 1.0, 'Total Invertido ARS': saldos_liquidos['Dólares'], 'Moneda Origen': 'Dólares'})
+            
+        if saldos_liquidos['Cable'] > 0:
+            tenencia.append({'Ticker': 'CABLE LÍQUIDO', 'Cantidad en Tenencia': saldos_liquidos['Cable'], 'Valor de Compra Promedio': 1.0, 'Total Invertido ARS': saldos_liquidos['Cable'], 'Moneda Origen': 'Cable'})
 
         return pd.DataFrame(tenencia), pd.DataFrame(registro_ventas), pd.DataFrame(lotes_abiertos)
 
@@ -275,7 +288,7 @@ class MotorCuantitativo:
                 if t == 'BCMMA': 
                     precios_vivos[t] = 12.505889 
                     continue
-                elif t == 'PESOS LÍQUIDOS':
+                elif t in ['PESOS LÍQUIDOS', 'DÓLARES LÍQUIDOS', 'CABLE LÍQUIDO']: # <--- Actualizado
                     precios_vivos[t] = 1.0 
                     continue
                 
@@ -404,7 +417,12 @@ class MotorCuantitativo:
 
     def exportar_base_datos(self):
         if not self.cargar_datos_crudos(): return
-        cap_neto = self.procesar_cashflow()
+        
+        # Obtenemos el diccionario completo de saldos líquidos
+        saldos_liquidos = self.procesar_cashflow()
+        # Solo sumamos a la macro los pesos líquidos (para no mezclar monedas)
+        cap_neto_pesos = saldos_liquidos.get('Pesos', 0.0) 
+        
         self.limpiar_y_ajustar_boletos()
         df_tenencia, df_fifo, df_lotes = self.calcular_inventario()
         df_tenencia_valuada = self.valuar_activos_yfinance(df_tenencia)
@@ -413,9 +431,9 @@ class MotorCuantitativo:
         resumen_macro = pd.DataFrame({
             'Metrica': ['Flujo Fondeo Neto', 'Total P&L Realizado', 'Total P&L NO Realizada'],
             'Valor': [
-                cap_neto, 
+                cap_neto_pesos, 
                 df_fifo['P&L Realizado ($)'].sum() if not df_fifo.empty else 0,
-                (df_tenencia_valuada['Ganancia/Perdida NO Realizada ($)'].sum() if not df_tenencia_valuada.empty else 0) + cap_neto
+                (df_tenencia_valuada['Ganancia/Perdida NO Realizada ($)'].sum() if not df_tenencia_valuada.empty else 0) + cap_neto_pesos
             ]
         })
 
