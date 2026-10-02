@@ -118,7 +118,9 @@ class MotorCuantitativo:
             if 'MSFT' in t or 'MICROSOFT' in t: return 'MSFT'
             if 'SPY' in t or 'S&P' in t: return 'SPY'
             if 'BONO' in t and 'AL30' in t: return 'AL30'
-            if 'PAMPA' in t or 'PAMP' in t: return 'PAMP' # <--- Agregado para Pampa
+            if 'PAMPA' in t or 'PAMP' in t: return 'PAMP'
+            if 'TRANSENER' in t or 'TRAN' in t: return 'TRAN'
+            if 'GOOGLE' in t or 'GOOGL' in t: return 'GOOGL'
             return t
             
         col_ticker = self.obtener_columna_flexible(df, ['Ticker', 'Simbolo', 'Especie'])
