@@ -1,0 +1,38 @@
+name: Motor Cuantitativo Automático
+
+on:
+  schedule:
+    - cron: '0 21 * * 1-5'
+  workflow_dispatch:
+
+jobs:
+  recalcular-y-guardar:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: 1. Abrir el repositorio
+        uses: actions/checkout@v4
+
+      - name: 2. Instalar Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.10'
+
+      - name: 3. Instalar librerías
+        # El robot corre este comando desde la raíz, donde tenés el archivo requirements.txt principal (según GitHub)
+        run: pip install -r requirements.txt
+
+      - name: 4. Encender el Motor Cuantitativo
+        # Acá está la magia: le decimos al robot que entre a la subcarpeta antes de correr el script
+        run: python src/utils/motor_cuantitativo.py
+        working-directory: ./mi_cartera_balanz
+
+      - name: 5. Guardar y subir a GitHub
+        run: |
+          git config --global user.name "Robot Institucional"
+          git config --global user.email "acciones@github.com"
+          git add .
+          git commit -m "🤖 Motor ejecutado: Cálculos actualizados" || exit 0
+          git push
